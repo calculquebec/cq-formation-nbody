@@ -1,0 +1,29 @@
+# Number of particles
+nparticle = 2000
+# Length of simulation time
+max_time = 0.1
+# Range of mass values for the particles
+min_mass = 0.5
+max_mass = 6.0
+# The size of a timestep, number of  
+# timesteps is max_time/timestep
+timestep = 0.001
+# Force softening
+epsilon = 0.001
+# How frequently to write the simulation state 
+# to an MDL MOL file for visualization in Jmol, 
+# PyMol etc.
+write_frequency = 250
+# If seed = 0, then the current time is used
+# to seed the random number generator
+seed = 124
+# Use a finite spatial domain with toroidal boundary
+# conditions (yes/no)?
+finite_domain = no
+# If so, what are the dimensions of this spatial domain?
+xmin = 0.0
+xmin = 25.0
+ymin = 0.0
+ymax = 50.0
+zmin = -10.0
+zmax = 35.0
