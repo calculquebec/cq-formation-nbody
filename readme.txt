@@ -21,6 +21,7 @@ parameter eps is included to avoid singularities caused by near collisions of
 the particles and should be small and positive. The integration algorithm 
 used is controlled by the compilation flag VERLET. The particle motions are 
 confined to a toroidal box when the parameter "finite_domain" is set to true. 
-The only console output occurs at the program's end when it writes out the 
-wallclock runtime.  
+The console output consists of the time value and total energy per particle, 
+written out every ten timesteps and at the program's end it writes out the 
+wallclock execution time.  
       

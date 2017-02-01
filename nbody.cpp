@@ -145,7 +145,7 @@ void integrate()
       }
     }
     // Print out the system's total energy per particle (should be fairly constant)
-    std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
+    if (l%10 == 0) std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
     if ((l % write_freq) == 0) write_state(l,xnew);
     // Now update the arrays
     for(i=0; i<NP; ++i) {
@@ -200,7 +200,7 @@ void integrate()
     }
     boundary_conditions(xnew);
     // Print out the system's total energy per particle (should be fairly constant)
-    std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
+    if (l%10 == 0) std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
     if ((l % write_freq) == 0) write_state(l,xnew);
     // Now update the arrays
     for(i=0; i<NP; ++i) {
