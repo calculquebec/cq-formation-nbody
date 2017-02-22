@@ -119,9 +119,9 @@ def main(plttype):
     #    animate_particles_2D(data)
 
 if __name__ == "__main__":
-    if sys.argv[1]=="3D":
+    """if sys.argv[1]=="3D":
         plttype = "3D"
     else :
-        plttype = "2D"
-    main(plttype)
+        plttype = "2D" """
+    main("3D")
     

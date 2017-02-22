@@ -1,15 +1,15 @@
 # Number of particles
-nparticle = 100
+nparticle = 1000
 # Length of simulation time
-max_time = 100
+max_time = 5
 # Range of mass values for the particles
-min_mass = 0.5
-max_mass = 6.0
+min_mass = 1.0
+max_mass = 2.0
 # The size of a timestep, number of  
 # timesteps is max_time/timestep
-timestep = 0.001
+timestep = 0.0001
 # Force softening
-epsilon = 0.001
+epsilon = 0.0001
 # How frequently to write the simulation state 
 # to an MDL MOL file for visualization in Jmol, 
 # PyMol etc.

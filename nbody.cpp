@@ -65,7 +65,7 @@ void compute_acceleration(const double* x,const double* mass,double* acc)
     for(j=0; j<3; ++j) {
       sum[j] = 0.0;
     }
-    for(j=1; j<NP; ++j) {
+    for(j=0; j<NP; ++j) {
       if (i == j) continue;
       delta = 0.0;
       for(k=0; k<3; ++k) {
@@ -78,7 +78,7 @@ void compute_acceleration(const double* x,const double* mass,double* acc)
       }
     }
     for(j=0; j<3; ++j) {
-      acc[3*i+j] = sum[j];
+      acc[3*i+j] = -sum[j];
     }
   }
 }
@@ -107,7 +107,59 @@ double compute_energy(const double* x,const double* v,const double* mass)
       U += mass[i]*mass[j]/std::sqrt(epsilon + delta); 
     }
   }
-  return 0.5*(T + U);  
+  return (0.5*T - U);  
+}
+
+double compute_energy_k(const double* x,const double* v,const double* mass)
+{
+  int i,j;
+  double delta,T = 0.0;
+
+  for(i=0; i<NP; ++i) {
+    delta = 0.0;
+    for(j=0; j<3; ++j) {
+      delta += v[3*i+j]*v[3*i+j];
+    }
+    T += mass[i]*delta;
+  }
+ 
+
+  return 0.5*T;  
+}
+
+double compute_energy_p(const double* x,const double* v,const double* mass)
+{
+  int i,j,k;
+  double delta,U = 0.0;
+
+  for(i=0; i<NP; ++i) {
+    for(j=1+i; j<NP; ++j) {
+      delta = 0.0;
+      for(k=0; k<3; ++k) {
+        delta += (x[3*i+k] - x[3*j+k])*(x[3*i+k] - x[3*j+k]);
+      }
+      U += mass[i]*mass[j]/std::sqrt(epsilon + delta); 
+    }
+  }
+  return U;  
+}
+
+void compute_center_of_mass(const double* x, const double* mass, double* center)
+{
+  int i,j;
+  double total_mass=0.;
+  for(j=0; j<3; ++j) {
+    center[j] =0.;
+  }
+  for(i=0; i<NP; ++i) {
+    for(j=0; j<3; ++j) {
+      center[j] += x[3*i+j]*mass[i];
+    }
+    total_mass += mass[i];
+  }
+  for(j=0; j<3; ++j) {
+    center[j] /= total_mass;
+  }
 }
 
 void integrate()
@@ -115,6 +167,8 @@ void integrate()
   int i,j,l;
   double x[3*NP],xnew[3*NP],v[3*NP],vnew[3*NP];
   double mass[NP],acc[3*NP],temp[3*NP];
+  double center[3];
+  double K,U,alpha;
 
   // Assign initial values...
   for(i=0; i<NP; ++i) {
@@ -127,8 +181,43 @@ void integrate()
   for(i=0; i<NP; ++i) {
     mass[i] = drandom(low_mass,high_mass);
   }
+  
+  if(bounded_state){
+      // Make sure that the total energy of the system is negative so particle don't fly in the distance
+      // set the kinetic energy to half the potential energy
+      U = compute_energy_p(x,v,mass);
+      K = compute_energy_k(x,v,mass);
+      alpha = std::sqrt(U/(2*K));
+
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          v[3*i+j] *= alpha;
+        }
+      }
+  }
+  
+  if(center_masses)
+  {
+      // Set the center of mass and it's speed to 0
+      compute_center_of_mass(x,mass,center);
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          x[3*i+j] -= center[j];
+        }
+      }
+      compute_center_of_mass(v,mass,center);
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          v[3*i+j] -= center[j];
+        }
+      }
+  }
+  
   write_state(0,x);
   std::cout << "0.0  " << compute_energy(x,v,mass)/double(NP) << std::endl;
+  //compute_center_of_mass(x,mass,center);
+  //std::cout << center[0] << "  " << center[1] << "  " << center[2] << "  " << std::endl;
+
 #ifdef VERLET
   compute_acceleration(x,mass,acc);
   for(l=1; l<=NT; ++l) {
@@ -145,7 +234,10 @@ void integrate()
       }
     }
     // Print out the system's total energy per particle (should be fairly constant)
-    if (l%10 == 0) std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
+    if (l%100 == 0) {
+        std::cout << dt*double(l) << "  " << compute_energy(x,v,mass)/double(NP) << std::endl;
+    }
+    
     if ((l % write_freq) == 0) write_state(l,xnew);
     // Now update the arrays
     for(i=0; i<NP; ++i) {
@@ -297,7 +389,7 @@ void read_parameters(const char* filename)
   assert(epsilon > std::numeric_limits<double>::epsilon() && epsilon < 0.1);
   assert(write_freq > 0);
   assert(low_mass > std::numeric_limits<double>::epsilon());
-  assert(high_mass > low_mass);
+  assert(high_mass >= low_mass);
   assert(seed >= 0);
   for(int i=0; i<3; ++i) {
     assert(L[2*i+1] > L[2*i]);
@@ -325,3 +417,4 @@ int main(int argc,char** argv)
 
   return 0;
 }
+

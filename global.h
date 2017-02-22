@@ -35,12 +35,17 @@ double high_mass = 5.0;
 // Time increment in ODE solver
 double dt = 0.05;
 // Force softening
-double epsilon = 0.01;
+double epsilon = 0.00000000001;
 // Use a finite domain with toroidal boundary 
 // conditions?
 bool finite_domain = false;
 // The dimensions of the finite domain
 double L[] = {0.0,100.0,0.0,100.0,0.0,50.0};
+// Condition for "bound state" of the particles
+bool bounded_state = true;
+// Fix the center of mass at 0
+bool center_masses = true;
+
 
 // Random number variables
 boost::mt19937 BGT;
