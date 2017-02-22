@@ -49,13 +49,7 @@ def animate_particles_2D(data):
 
  
     
-def animate_particles_3D(data):
-    def update_3D(num, data):
-        particles = data[0][2]
-        plot = ax.scatter(particles[0], particles[1], particles[2], c=color, cmap=plt.get_cmap("brg"))
-        plot.title("t="+str)
-        return plot
-    
+"""def animate_particles_3D(data):   
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     
@@ -75,9 +69,42 @@ def animate_particles_3D(data):
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
 
-    ani = animation.FuncAnimation(fig, update_3D, len(data), fargs=(data, plot), interval=150)
-    plt.show()
+    ani = animation.FuncAnimation(fig, update_3D, len(data), fargs=(data, plot), interval=50)
+    plt.show()"""
+    
+def animate_particles_3D(data):
+    """    
+    def update_3D(num, data):
+        particles = data[0][2]
+        plot = ax.scatter(particles[0], particles[1], particles[2], c=color, cmap=plt.get_cmap("brg"))
+        plot.title("t="+str)
+        return plot"""
+    
 
+    particles = data[0][2]
+    N = len(particles[0])
+    color = np.arange(0,100,100/N)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    plot = ax.scatter(particles[0], particles[1], particles[2], c=color, cmap=plt.get_cmap("brg"))
+
+    def update_3D(num):
+        particles = data[num][2]
+        #plot = ax.scatter(particles[0], particles[1], particles[2], c=color, cmap=plt.get_cmap("brg"))
+
+        plot._offsets3d=(particles[0], particles[1], particles[2])
+        
+        return plot,
+    
+    def setup_3D():
+
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        return plot,    
+
+    ani = animation.FuncAnimation(fig, update_3D, len(data),init_func=setup_3D, interval=50)
+    plt.show()
     
 def main(plttype):
     filelist = glob.glob("*.mol")
