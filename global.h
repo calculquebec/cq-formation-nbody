@@ -6,19 +6,9 @@
 #include <cmath>
 #include <ctime>
 #include <string>
+#include <sstream>
+#include <random>
 #include <limits>
-
-// The Boost library headers...
-#include <boost/tokenizer.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/timer/timer.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/unordered_map.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/random/uniform_real.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/variate_generator.hpp>
-#include <boost/random/normal_distribution.hpp>
 
 // Number of particles
 int NP = 100;
@@ -46,10 +36,9 @@ bool bounded_state = true;
 // Fix the center of mass at 0
 bool center_masses = true;
 
-
 // Random number variables
-boost::mt19937 BGT;
-boost::uniform_real<> uniform;
-boost::variate_generator<boost::mt19937&,boost::uniform_real<> >* VRG;
+std::random_device rd;  
+std::mt19937 gen(rd());
+std::uniform_real_distribution<> VRG(0.0,1.0);
 
 
