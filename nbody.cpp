@@ -149,7 +149,7 @@ void compute_center_of_mass(const double* x, const double* mass, double* center)
   double total_mass = 0.0;
 
   for(j=0; j<3; ++j) {
-    center[j] =0.;
+    center[j] = 0.0;
   }
   for(i=0; i<NP; ++i) {
     for(j=0; j<3; ++j) {
@@ -183,17 +183,17 @@ void integrate()
   }
   
   if (bounded_state) {
-      // Make sure that the total energy of the system is negative so particle don't fly in the distance
-      // set the kinetic energy to half the potential energy
-      U = compute_potential_energy(x,v,mass);
-      K = compute_kinetic_energy(x,v,mass);
-      alpha = std::sqrt(U/(2.0*K));
+    // Make sure that the total energy of the system is negative so particle don't fly in the distance
+    // set the kinetic energy to half the potential energy
+    U = compute_potential_energy(x,v,mass);
+    K = compute_kinetic_energy(x,v,mass);
+    alpha = std::sqrt(U/(2.0*K));
 
-      for(i=0; i<NP; ++i) {
-        for(j=0; j<3; ++j) {
-          v[3*i+j] *= alpha;
-        }
+    for(i=0; i<NP; ++i) {
+      for(j=0; j<3; ++j) {
+        v[3*i+j] *= alpha;
       }
+    }
   }
   
   if (center_masses) {

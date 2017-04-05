@@ -4,7 +4,7 @@
 
 double drandom(double x,double y)
 {
-  double out = (*VRG)();
+  double out = VRG(gen);
   out = x + (y - x)*out;
   return out;
 }
@@ -112,7 +112,7 @@ double compute_energy(const double* x,const double* v,const double* mass,const i
   return (0.5*T - U);  
 }
 
-double compute_energy_k(const double* v,const double* mass)
+double compute_kinetic_energy(const double* v,const double* mass)
 {
   int i,j;
   double delta,T = 0.0;
@@ -127,7 +127,7 @@ double compute_energy_k(const double* v,const double* mass)
   return 0.5*T;  
 }
 
-double compute_energy_p(const double* x, const double* mass)
+double compute_potential_energy(const double* x, const double* mass)
 {
   int i,j,k;
   double delta,U = 0.0;
@@ -147,9 +147,10 @@ double compute_energy_p(const double* x, const double* mass)
 void compute_center_of_mass(const double* x, const double* mass, double* center)
 {
   int i,j;
-  double total_mass=0.;
+  double total_mass = 0.0;
+
   for(j=0; j<3; ++j) {
-    center[j] =0.;
+    center[j] = 0.0;
   }
   for(i=0; i<NP; ++i) {
     for(j=0; j<3; ++j) {
@@ -164,14 +165,15 @@ void compute_center_of_mass(const double* x, const double* mass, double* center)
 
 void center_particles(double* x, const double* mass)
 {
-    int i,j;
-    double center[3];
-    compute_center_of_mass(x,mass,center);
-    for(i=0; i<NP; ++i) {
-        for(j=0; j<3; ++j) {
-            x[3*i+j] -= center[j];
-        }
+  int i,j;
+  double center[3];
+
+  compute_center_of_mass(x,mass,center);
+  for(i=0; i<NP; ++i) {
+    for(j=0; j<3; ++j) {
+      x[3*i+j] -= center[j];
     }
+  }
 }
 
 void integrate()
@@ -195,38 +197,33 @@ void integrate()
     mass[i] = drandom(low_mass,high_mass);
   }
 
-  if(center_masses)
-  {
+  if (center_masses) {
     // Set the center of mass and it's speed to 0
-    center_particles(x, mass);
-    center_particles(v, mass);
+    center_particles(x,mass);
+    center_particles(v,mass);
   }
   
   for(i=0; i<NP; ++i) {
-      v[3*i+1] += x[3*i+0]/10;
-      v[3*i+0] -= x[3*i+1]/10;
+    v[3*i+1] += x[3*i+0]/10.0;
+    v[3*i+0] -= x[3*i+1]/10.0;
   }
   
-  if(bounded_state){
-      // Make sure that the total energy of the system is negative so particle don't fly in the distance
-      // set the kinetic energy to half the potential energy
-      U = compute_energy_p(x,mass);
-      K = compute_energy_k(v,mass);
-      alpha = std::sqrt(U/(2*K));
+  if (bounded_state) {
+    // Make sure that the total energy of the system is negative so particle don't fly in the distance
+    // set the kinetic energy to half the potential energy
+    U = compute_potential_energy(x,mass);
+    K = compute_kinetic_energy(v,mass);
+    alpha = std::sqrt(U/(2.0*K));
 
-      for(i=0; i<NP; ++i) {
-        for(j=0; j<3; ++j) {
-          v[3*i+j] *= alpha;
-        }
+    for(i=0; i<NP; ++i) {
+      for(j=0; j<3; ++j) {
+        v[3*i+j] *= alpha;
       }
+    }
   }
-  
-
   
   write_state(0,x);
   std::cout << "0.0  " << (compute_energy_k(v,mass)-compute_energy_p(x,mass))/double(NP) << std::endl;
-  //compute_center_of_mass(x,mass,center);
-  //std::cout << center[0] << "  " << center[1] << "  " << center[2] << "  " << std::endl;
 
 #ifdef VERLET
     #pragma omp parallel private(i,j,tread_n)
@@ -337,7 +334,9 @@ void integrate()
     }
     boundary_conditions(xnew);
     // Print out the system's total energy per particle (should be fairly constant)
-    if (l%10 == 0) std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
+    if (l%100 == 0) {
+      std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
+    }
     if ((l % write_freq) == 0) write_state(l,xnew);
     // Now update the arrays
     for(i=0; i<NP; ++i) {
@@ -353,9 +352,9 @@ void integrate()
 
 void read_parameters(const char* filename)
 {
+  unsigned int i,bpoint;
   double tvalue;
   std::string line,name,value;
-  std::vector<std::string> ppair;
 
   std::ifstream s(filename);
   if (!s.is_open()) {
@@ -372,58 +371,76 @@ void read_parameters(const char* filename)
     if (line[0] == '#') continue;
     // If there's no equals sign in this line, continue
     if (line.find('=') == std::string::npos) continue;
-    boost::split(ppair,line,boost::is_any_of("="));
-    name = ppair[0];
-    value = ppair[1];
-    boost::algorithm::trim(name);
-    boost::algorithm::trim(value);
+    // Assumes that the equals sign can only occur once in 
+    // the line
+    bpoint = 0;
+    name = "";
+    for(i=0; i<line.size(); ++i) {
+      if (line[i] == ' ') continue;
+      if (line[i] == '=') {
+        bpoint = i;
+        break;
+      }
+      name += line[i];
+    }
+    value = "";
+    for(i=1+bpoint; i<line.size(); ++i) {
+      if (line[i] == ' ') continue;
+      value += line[i];
+    }
     // Now that we have the parameter name, see if it matches
     // any of the known parameters. If so, read in the value and
     // assign it
     if (name == "nparticle") {
-      NP = boost::lexical_cast<int>(value);
+      NP = stoi(value);
     }
     else if (name == "max_time") {
-      tvalue = boost::lexical_cast<double>(value);
+      tvalue = stod(value);
     }
     else if (name == "seed") {
-      seed = boost::lexical_cast<int>(value);
+      seed = stoi(value);
     }
     else if (name == "timestep") {
-      dt = boost::lexical_cast<double>(value);
+      dt = stod(value);
     }
     else if (name == "epsilon") {
-      epsilon = boost::lexical_cast<double>(value);
+      epsilon = stod(value);
     }
     else if (name == "min_mass") {
-      low_mass = boost::lexical_cast<double>(value);
+      low_mass = stod(value);
     }
     else if (name == "max_mass") {
-      high_mass = boost::lexical_cast<double>(value);
+      high_mass = stod(value);
     }
     else if (name == "write_frequency") {
-      write_freq = boost::lexical_cast<int>(value);
+      write_freq = stoi(value);
     }
     else if (name == "finite_domain") {
       finite_domain = (value == "yes") ? true : false;
     }
+    else if (name == "center_of_mass") {
+      center_masses = (value == "yes") ? true : false;
+    }
+    else if (name == "bound_state") {
+      bounded_state = (value == "yes") ? true : false;
+    }
     else if (name == "xmin") {
-      L[0] = boost::lexical_cast<double>(value);
+      L[0] = stod(value);
     }
     else if (name == "xmax") {
-      L[1] = boost::lexical_cast<double>(value);
+      L[1] = stod(value);
     }
     else if (name == "ymin") {
-      L[2] = boost::lexical_cast<double>(value);
+      L[2] = stod(value);
     }
     else if (name == "ymax") {
-      L[3] = boost::lexical_cast<double>(value);
+      L[3] = stod(value);
     }
     else if (name == "zmin") {
-      L[4] = boost::lexical_cast<double>(value);
+      L[4] = stod(value);
     }
     else if (name == "zmax") {
-      L[5] = boost::lexical_cast<double>(value);
+      L[5] = stod(value);
     }
   }
   s.close();
@@ -440,7 +457,7 @@ void read_parameters(const char* filename)
     assert(L[2*i+1] > L[2*i]);
   }
   if (seed == 0) seed = std::time(NULL);
-  BGT.seed(seed);
+  gen.seed(seed);
   NT = int(tvalue/dt);
 }
 
@@ -450,15 +467,9 @@ int main(int argc,char** argv)
     std::cerr << "Usage: ./nbody parameters.txt" << std::endl;
     return 0;
   }
-  boost::timer::auto_cpu_timer t;
-
-  VRG = new boost::variate_generator<boost::mt19937&,boost::uniform_real<> >(BGT,uniform);
-
   if (argc == 2) read_parameters(argv[1]);
 
   integrate();
-
-  delete VRG;
 
   return 0;
 }

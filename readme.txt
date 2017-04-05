@@ -1,8 +1,7 @@
-This N body gravitational code is written in C++ and depends on the existence 
-of a Boost library to handle the parsing of the plain text parameter file and 
-to generate pseudo-random numbers. The Makefile contains lines where you can 
-specify the C++ compiler as well as any necessary compilation and linker flags. 
-The resulting binary is called "nbody" and should be run with the command 
+This N body gravitational code is written in C++, the Makefile contains lines 
+where you can specify the C++ compiler as well as any necessary compilation and 
+linker flags. The resulting binary is called "nbody" and should be run with the 
+command 
 ./nbody [parameter file]
 An example of a parameter file is provided (parameters.txt); if no parameter 
 file is supplied to the program, it runs with the default parameter values 
@@ -22,6 +21,5 @@ the particles and should be small and positive. The integration algorithm
 used is controlled by the compilation flag VERLET. The particle motions are 
 confined to a toroidal box when the parameter "finite_domain" is set to true. 
 The console output consists of the time value and total energy per particle, 
-written out every ten timesteps and at the program's end it writes out the 
-wallclock execution time.  
+written out every hundred timesteps. 
       
