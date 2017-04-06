@@ -162,31 +162,55 @@ void compute_center_of_mass(const double* x, const double* mass, double* center)
   }
 }
 
+void center_particles(double* x, const double* mass)
+{
+  int i,j;
+  double center[3];
+  compute_center_of_mass(x,mass,center);
+  for(i=0; i<NP; ++i) {
+    for(j=0; j<3; ++j) {
+      x[3*i+j] -= center[j];
+    }
+  }
+}
+
 void integrate()
 {
   int i,j,l;
   double x[3*NP],xnew[3*NP],v[3*NP],vnew[3*NP];
   double mass[NP],acc[3*NP],temp[3*NP];
-  double center[3];
   double K,U,alpha;
 
   // Assign initial values...
   for(i=0; i<NP; ++i) {
     for(j=0; j<3; ++j) {
-      // Initial position
+      // Initial position and speed
       x[3*i+j] = drandom(L[2*j],L[2*j+1]);
       v[3*i+j] = drandom(-0.2,0.2);
     }
   }
+  // Assign random mass
   for(i=0; i<NP; ++i) {
     mass[i] = drandom(low_mass,high_mass);
   }
-  
+
+  // Add a rotation around the z axis
+  for(i=0; i<NP; ++i) {
+    v[3*i+1] += x[3*i+0]/10.0;
+    v[3*i+0] -= x[3*i+1]/10.0;
+  }
+
+  if (center_masses) {
+    // Set the center of mass and it's speed to 0
+    center_particles(x, mass);
+    center_particles(v, mass);
+  }
+
   if (bounded_state) {
     // Make sure that the total energy of the system is negative so particle don't fly in the distance
-    // set the kinetic energy to half the potential energy
-    U = compute_potential_energy(x,v,mass);
-    K = compute_kinetic_energy(x,v,mass);
+    // Set the kinetic energy to half the potential energy
+    U = compute_energy_p(x,v,mass);
+    K = compute_energy_k(x,v,mass);
     alpha = std::sqrt(U/(2.0*K));
 
     for(i=0; i<NP; ++i) {
@@ -195,23 +219,7 @@ void integrate()
       }
     }
   }
-  
-  if (center_masses) {
-    // Set the center of mass and it's speed to 0
-    compute_center_of_mass(x,mass,center);
-    for(i=0; i<NP; ++i) {
-      for(j=0; j<3; ++j) {
-        x[3*i+j] -= center[j];
-      }
-    }
-    compute_center_of_mass(v,mass,center);
-    for(i=0; i<NP; ++i) {
-      for(j=0; j<3; ++j) {
-        v[3*i+j] -= center[j];
-      }
-    }
-  }
-  
+
   write_state(0,x);
   std::cout << "0.0  " << compute_energy(x,v,mass)/double(NP) << std::endl;
 

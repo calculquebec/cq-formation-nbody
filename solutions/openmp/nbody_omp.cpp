@@ -141,16 +141,16 @@ double compute_potential_energy(const double* x,const double* v,const double* ma
       U += mass[i]*mass[j]/std::sqrt(epsilon + delta); 
     }
   }
-
   return U;  
 }
 
 void compute_center_of_mass(const double* x, const double* mass, double* center)
 {
   int i,j;
-  double total_mass=0.;
+  double total_mass = 0.0;
+
   for(j=0; j<3; ++j) {
-    center[j] =0.;
+    center[j] = 0.0;
   }
   for(i=0; i<NP; ++i) {
     for(j=0; j<3; ++j) {
@@ -185,13 +185,20 @@ void integrate()
   // Assign initial values...
   for(i=0; i<NP; ++i) {
     for(j=0; j<3; ++j) {
-      // Initial position
+      // Initial position and speed
       x[3*i+j] = drandom(L[2*j],L[2*j+1]);
       v[3*i+j] = drandom(-0.2,0.2);
     }
   }
+  // Assign random mass
   for(i=0; i<NP; ++i) {
     mass[i] = drandom(low_mass,high_mass);
+  }
+
+  // Add a rotation around the z axis
+  for(i=0; i<NP; ++i) {
+    v[3*i+1] += x[3*i+0]/10.0;
+    v[3*i+0] -= x[3*i+1]/10.0;
   }
 
   if (center_masses) {
@@ -199,15 +206,10 @@ void integrate()
     center_particles(x, mass);
     center_particles(v, mass);
   }
-  
-  for(i=0; i<NP; ++i) {
-    v[3*i+1] += x[3*i+0]/10.0;
-    v[3*i+0] -= x[3*i+1]/10.0;
-  }
-  
+
   if (bounded_state) {
     // Make sure that the total energy of the system is negative so particle don't fly in the distance
-    // set the kinetic energy to half the potential energy
+    // Set the kinetic energy to half the potential energy
     U = compute_energy_p(x,v,mass);
     K = compute_energy_k(x,v,mass);
     alpha = std::sqrt(U/(2.0*K));
@@ -218,7 +220,7 @@ void integrate()
       }
     }
   }
-  
+
   write_state(0,x);
   std::cout << "0.0  " << compute_energy(x,v,mass)/double(NP) << std::endl;
 
@@ -237,11 +239,13 @@ void integrate()
         vnew[3*i+j] = v[3*i+j] + 0.5*dt*(acc[3*i+j] + temp[3*i+j]);
       }
     }
+
     // Print out the system's total energy per particle (should be fairly constant)
     if (l%100 == 0) {
       std::cout << dt*double(l) << "  " << compute_energy(x,v,mass)/double(NP) << std::endl;
     }    
     if ((l % write_freq) == 0) write_state(l,xnew);
+
     // Now update the arrays
     for(i=0; i<NP; ++i) {
       for(j=0; j<3; ++j) {
@@ -294,11 +298,13 @@ void integrate()
       }
     }
     boundary_conditions(xnew);
+
     // Print out the system's total energy per particle (should be fairly constant)
     if (l%100 == 0) {
       std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
     }
     if ((l % write_freq) == 0) write_state(l,xnew);
+
     // Now update the arrays
     for(i=0; i<NP; ++i) {
       for(j=0; j<3; ++j) {
@@ -428,6 +434,7 @@ int main(int argc,char** argv)
     std::cerr << "Usage: ./nbody parameters.txt" << std::endl;
     return 0;
   }
+
   if (argc == 2) read_parameters(argv[1]);
 
   integrate();
