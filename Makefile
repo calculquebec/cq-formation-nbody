@@ -1,3 +1,4 @@
+OBJS = main.o nbody.o particule.o vect3d.o
 LIBS = -lm
 
 CXX = g++
@@ -10,19 +11,11 @@ OPT = -O3 -march=native -funroll-loops -ffast-math -std=c++11
 
 CXX_FLAGS = $(OPT) -DVERLET
 
-nbody: nbody.cpp global.h
-	$(CXX) $(CXX_FLAGS) -o nbody nbody.cpp $(LIBS)
+nbody: $(OBJS)
+	$(CXX) $(OPT) -o $@ $+ $(LIBS)
+
+%.o: %.cpp %.h
+	$(CXX) -c $(CXX_FLAGS) -o $@ $<
 
 clean:
-	rm -f nbody
-
-
-
-
-
-
-
-
-
-
-
+	rm -f nbody $(OBJS)

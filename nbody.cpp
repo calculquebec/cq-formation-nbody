@@ -1,3 +1,22 @@
+#include "nbody.h"
+
+
+NBody::NBody(const Algo algo_): algo(algo_)
+{
+}
+
+
+void NBody::configure(const Params &params)
+{
+}
+
+
+void NBody::integrate()
+{
+}
+
+
+#if 0
 #include "global.h"
 
 double drandom(double x,double y)
@@ -440,4 +459,6 @@ int main(int argc,char** argv)
 
   return 0;
 }
+
+#endif
 
