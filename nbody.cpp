@@ -209,8 +209,8 @@ void integrate()
   if (bounded_state) {
     // Make sure that the total energy of the system is negative so particle don't fly in the distance
     // Set the kinetic energy to half the potential energy
-    U = compute_energy_p(x,v,mass);
-    K = compute_energy_k(x,v,mass);
+    U = compute_potential_energy(x,v,mass);
+    K = compute_kinetic_energy(x,v,mass);
     alpha = std::sqrt(U/(2.0*K));
 
     for(i=0; i<NP; ++i) {

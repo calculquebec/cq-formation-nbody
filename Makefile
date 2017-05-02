@@ -5,7 +5,7 @@ CXX = g++
 
 DEBUG = -g -Wall
 
-OPT = -O3 -march=native -funroll-loops -ffast-math
+OPT = -O3 -march=native -funroll-loops -ffast-math -std=c++11
 #OPT = -O3 -xHost -ipo
 
 CXX_FLAGS = $(OPT) -DVERLET
