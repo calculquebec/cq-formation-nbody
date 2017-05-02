@@ -1,13 +1,123 @@
+#include <cassert>
+#include <ctime>
+#include <limits>
+#include <random>
+
 #include "nbody.h"
 
 
-NBody::NBody(const Algo algo_): algo(algo_)
+NBody::NBody(const Algo algo_): rd(), gen(rd()), VRG(0.0, 1.0), algo(algo_)
 {
 }
 
 
 void NBody::configure(const Params &params)
 {
+    std::string key;
+
+    // Now that we have all input parameters, see if they match known parameters
+    // If so, read in the value and assign it
+
+    key = "seed";
+    if (params.find(key) != params.end()) {
+        int seed = stoi(params.at(key));
+        assert(seed >= 0);
+        if (seed == 0) seed = std::time(NULL);
+        gen.seed(seed);
+    }
+
+    key = "nparticle";
+    if (params.find(key) != params.end()) {
+        particules.resize(stoi(params.at(key)));
+        assert(particules.size() > 1);
+    }
+
+    key = "timestep";
+    if (params.find(key) != params.end()) {
+        dt = stod(params.at(key));
+        assert(dt > std::numeric_limits<double>::epsilon());
+    }
+
+    key = "max_time";
+    if (params.find(key) != params.end()) {
+        double totalTime = stod(params.at(key));
+        assert(totalTime > std::numeric_limits<double>::epsilon());
+        NT = (int)(totalTime / dt);
+    }
+
+    key = "write_frequency";
+    if (params.find(key) != params.end()) {
+        write_freq = stoi(params.at(key));
+        assert(write_freq > 0);
+    }
+
+    key = "epsilon";
+    if (params.find(key) != params.end()) {
+        epsilon = stod(params.at(key));
+        assert(epsilon > std::numeric_limits<double>::epsilon() && epsilon < 0.1);
+    }
+
+    key = "min_mass";
+    if (params.find(key) != params.end()) {
+        low_mass = stod(params.at(key));
+        assert(low_mass > std::numeric_limits<double>::epsilon());
+    }
+
+    key = "max_mass";
+    if (params.find(key) != params.end()) {
+        high_mass = stod(params.at(key));
+        assert(high_mass >= low_mass);
+    }
+
+    key = "finite_domain";
+    if (params.find(key) != params.end()) {
+        finite_domain = (params.at(key) == "yes") ? true : false;
+    }
+
+    key = "center_of_mass";
+    if (params.find(key) != params.end()) {
+        center_masses = (params.at(key) == "yes") ? true : false;
+    }
+
+    key = "bound_state";
+    if (params.find(key) != params.end()) {
+        bounded_state = (params.at(key) == "yes") ? true : false;
+    }
+
+    key = "xmin";
+    if (params.find(key) != params.end()) {
+        L.min.x = stod(params.at(key));
+    }
+
+    key = "xmax";
+    if (params.find(key) != params.end()) {
+        L.max.x = stod(params.at(key));
+    }
+
+    key = "ymin";
+    if (params.find(key) != params.end()) {
+        L.min.y = stod(params.at(key));
+    }
+
+    key = "ymax";
+    if (params.find(key) != params.end()) {
+        L.max.y = stod(params.at(key));
+    }
+
+    key = "zmin";
+    if (params.find(key) != params.end()) {
+        L.min.z = stod(params.at(key));
+    }
+
+    key = "zmax";
+    if (params.find(key) != params.end()) {
+        L.max.z = stod(params.at(key));
+    }
+
+    // Sanity checks
+    assert(L.min.x < L.max.x);
+    assert(L.min.y < L.max.y);
+    assert(L.min.z < L.max.z);
 }
 
 
