@@ -2,6 +2,7 @@
 #define NBODY_H
 
 
+#include <random>
 #include <vector>
 
 #include "main.h"
@@ -47,6 +48,8 @@ public:
     NBody(const Algo algo_ = Verlet);
 
     void configure(const Params &params);
+    void printConfig() const;
+
     void integrate();
 
 private:

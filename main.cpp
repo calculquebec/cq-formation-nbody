@@ -77,7 +77,10 @@ int main(int argc, char** argv)
     NBody model(NBody::Runge_Kutta);
 #endif
 
+    //model.printConfig();
     model.configure(params);
+    //model.printConfig();
+
     model.integrate();
 
     return 0;

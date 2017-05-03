@@ -1,7 +1,7 @@
 #include <cassert>
 #include <ctime>
 #include <limits>
-#include <random>
+#include <iostream>
 
 #include "nbody.h"
 
@@ -139,6 +139,31 @@ void NBody::configure(const Params &params)
     assert(L.min.x < L.max.x);
     assert(L.min.y < L.max.y);
     assert(L.min.z < L.max.z);
+}
+
+
+void NBody::printConfig() const
+{
+    std::cout << "nparticle = " << particules.size() << std::endl;
+
+    std::cout << "timestep = " << dt << std::endl;
+    std::cout << "max_time = " << NT * dt << std::endl;
+    std::cout << "write_frequency = " << write_freq << std::endl;
+    std::cout << "epsilon = " << epsilon << std::endl;
+
+    std::cout << "min_mass = " << low_mass << std::endl;
+    std::cout << "max_mass = " << high_mass << std::endl;
+
+    std::cout << "centre_of_mass = " << (center_masses ? "yes" : "no") << std::endl;
+    std::cout << "finite_domain = " << (finite_domain ? "yes" : "no") << std::endl;
+    std::cout << "bound_state = " << (bounded_state ? "yes" : "no") << std::endl;
+
+    std::cout << "xmin = " << L.min.x << std::endl;
+    std::cout << "xmax = " << L.max.x << std::endl;
+    std::cout << "ymin = " << L.min.y << std::endl;
+    std::cout << "ymax = " << L.max.y << std::endl;
+    std::cout << "zmin = " << L.min.z << std::endl;
+    std::cout << "zmax = " << L.max.z << std::endl;
 }
 
 
