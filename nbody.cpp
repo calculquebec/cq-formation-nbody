@@ -169,6 +169,28 @@ void NBody::printConfig() const
 
 void NBody::integrate()
 {
+    const size_t NP = particules.size();
+    const Vect3d V_min(-0.2, -0.2, -0.2);
+    const Vect3d V_max( 0.2,  0.2,  0.2);
+
+    // Assign initial values...
+    for (size_t i = 0; i < NP; ++i) {
+        particules[i].setMass(random1d(low_mass, high_mass));
+        particules[i].setPos(random3d(L.min, L.max));
+        particules[i].setVel(random3d(V_min, V_max));
+    }
+}
+
+
+double NBody::random1d(double a, double b)
+{
+    return (a + (b - a) * VRG(gen));
+}
+
+
+Vect3d NBody::random3d(const Vect3d &a, const Vect3d &b)
+{
+    return Vect3d(random1d(a.x, b.x), random1d(a.y, b.y), random1d(a.z, b.z));
 }
 
 
