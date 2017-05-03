@@ -7,6 +7,10 @@ public:
     Vect3d();
     Vect3d(double x_, double y_, double z_);
 
+    Vect3d operator+(const Vect3d &v) const;
+
+    Vect3d operator/(double den) const;
+
 public:
     union {
         struct { double x, y, z; };

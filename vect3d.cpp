@@ -12,3 +12,19 @@ Vect3d::Vect3d(double x_, double y_, double z_): x(x_), y(y_), z(z_)
 }
 
 
+Vect3d Vect3d::operator+(const Vect3d &v) const
+{
+    return Vect3d(x + v.x,
+                  y + v.y,
+                  z + v.z);
+}
+
+
+Vect3d Vect3d::operator/(double den) const
+{
+    return Vect3d(x / den,
+                  y / den,
+                  z / den);
+}
+
+
