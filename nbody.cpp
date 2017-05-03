@@ -8,6 +8,27 @@
 
 NBody::NBody(const Algo algo_): rd(), gen(rd()), VRG(0.0, 1.0), algo(algo_)
 {
+    // All particules
+    particules.resize(DEFAULT_NP);
+
+    // Time attributes: Delta T, N steps, write result freq, epsilon limit
+    dt = DEFAULT_DT;
+    NT = DEFAULT_NT;
+    write_freq = DEFAULT_WRITE_FREQ;
+    epsilon = DEFAULT_EPSILON;
+
+    // Limits for the masses
+    low_mass = DEFAULT_LOW_MASS;
+    high_mass = DEFAULT_HIGH_MASS;
+
+    // Options
+    center_masses = DEFAULT_CENTER_MASSES;
+    finite_domain = DEFAULT_FINITE_DOMAIN;
+    bounded_state = DEFAULT_BOUNDED_STATE;
+
+    // Limits for the 3D space
+    L.min = DEFAULT_L_MIN;
+    L.max = DEFAULT_L_MAX;
 }
 
 
@@ -69,14 +90,14 @@ void NBody::configure(const Params &params)
         assert(high_mass >= low_mass);
     }
 
-    key = "finite_domain";
-    if (params.find(key) != params.end()) {
-        finite_domain = (params.at(key) == "yes") ? true : false;
-    }
-
     key = "center_of_mass";
     if (params.find(key) != params.end()) {
         center_masses = (params.at(key) == "yes") ? true : false;
+    }
+
+    key = "finite_domain";
+    if (params.find(key) != params.end()) {
+        finite_domain = (params.at(key) == "yes") ? true : false;
     }
 
     key = "bound_state";
