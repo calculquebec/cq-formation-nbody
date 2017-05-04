@@ -23,8 +23,8 @@ NBody::NBody(const Algo algo_): rd(), gen(rd()), VRG(0.0, 1.0), algo(algo_)
 
     // Options
     center_masses = DEFAULT_CENTER_MASSES;
-    finite_domain = DEFAULT_FINITE_DOMAIN;
     bounded_state = DEFAULT_BOUNDED_STATE;
+    finite_domain = DEFAULT_FINITE_DOMAIN;
 
     // Limits for the 3D space
     L.min = DEFAULT_L_MIN;
@@ -95,14 +95,15 @@ void NBody::configure(const Params &params)
         center_masses = (params.at(key) == "yes") ? true : false;
     }
 
-    key = "finite_domain";
-    if (params.find(key) != params.end()) {
-        finite_domain = (params.at(key) == "yes") ? true : false;
-    }
-
     key = "bound_state";
     if (params.find(key) != params.end()) {
         bounded_state = (params.at(key) == "yes") ? true : false;
+    }
+
+    key = "finite_domain";
+    if (params.find(key) != params.end()) {
+        finite_domain = (params.at(key) == "yes") ? true : false;
+        assert((finite_domain && center_masses) == false);
     }
 
     key = "xmin";
@@ -113,6 +114,7 @@ void NBody::configure(const Params &params)
     key = "xmax";
     if (params.find(key) != params.end()) {
         L.max.x = stod(params.at(key));
+        assert(L.min.x < L.max.x);
     }
 
     key = "ymin";
@@ -123,6 +125,7 @@ void NBody::configure(const Params &params)
     key = "ymax";
     if (params.find(key) != params.end()) {
         L.max.y = stod(params.at(key));
+        assert(L.min.y < L.max.y);
     }
 
     key = "zmin";
@@ -133,12 +136,8 @@ void NBody::configure(const Params &params)
     key = "zmax";
     if (params.find(key) != params.end()) {
         L.max.z = stod(params.at(key));
+        assert(L.min.z < L.max.z);
     }
-
-    // Sanity checks
-    assert(L.min.x < L.max.x);
-    assert(L.min.y < L.max.y);
-    assert(L.min.z < L.max.z);
 }
 
 
@@ -155,8 +154,8 @@ void NBody::printConfig() const
     std::cout << "max_mass = " << high_mass << std::endl;
 
     std::cout << "centre_of_mass = " << (center_masses ? "yes" : "no") << std::endl;
-    std::cout << "finite_domain = " << (finite_domain ? "yes" : "no") << std::endl;
     std::cout << "bound_state = " << (bounded_state ? "yes" : "no") << std::endl;
+    std::cout << "finite_domain = " << (finite_domain ? "yes" : "no") << std::endl;
 
     std::cout << "xmin = " << L.min.x << std::endl;
     std::cout << "xmax = " << L.max.x << std::endl;

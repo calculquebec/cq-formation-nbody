@@ -29,10 +29,10 @@
 
 // Fix the center of mass at 0
 #define DEFAULT_CENTER_MASSES true
-// Use a finite domain with toroidal boundary conditions?
-#define DEFAULT_FINITE_DOMAIN false
 // Condition for "bound state" of the particles
 #define DEFAULT_BOUNDED_STATE true
+// Use a finite domain with toroidal boundary conditions?
+#define DEFAULT_FINITE_DOMAIN false
 
 // The dimensions of the finite domain
 #define DEFAULT_L_MIN Vect3d(0.0, 0.0, 0.0)
@@ -79,8 +79,8 @@ private:
 
     // Options
     bool center_masses;
-    bool finite_domain;
     bool bounded_state;
+    bool finite_domain;
 
     // Limits for the 3D space
     struct { Vect3d min; Vect3d max; } L;
