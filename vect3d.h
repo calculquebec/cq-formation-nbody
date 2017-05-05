@@ -9,7 +9,13 @@ public:
 
     Vect3d operator+(const Vect3d &v) const;
 
+    Vect3d operator*(double val) const;
     Vect3d operator/(double den) const;
+
+    const Vect3d& operator+=(const Vect3d &v);
+    const Vect3d& operator-=(const Vect3d &v);
+
+    const Vect3d& operator/=(double den);
 
 public:
     union {

@@ -14,6 +14,15 @@ public:
     void setPos(const Vect3d &pos);
     void setVel(const Vect3d &vel);
 
+    const double& m() const;
+    double& m();
+
+    const Vect3d& p() const;
+    Vect3d& p();
+
+    const Vect3d& v() const;
+    Vect3d& v();
+
 private:
     double mass;
     Vect3d position;

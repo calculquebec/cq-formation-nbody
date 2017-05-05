@@ -186,6 +186,11 @@ void NBody::integrate()
                         Vect3d(-newPos.y, newPos.x, 0) / 10;
         particules[i].setVel(newVel);
     }
+
+    if (center_masses) {
+        // Set the center of mass and it's speed to 0
+        centerAll();
+    }
 }
 
 
@@ -198,6 +203,29 @@ double NBody::random1d(double a, double b)
 Vect3d NBody::random3d(const Vect3d &a, const Vect3d &b)
 {
     return Vect3d(random1d(a.x, b.x), random1d(a.y, b.y), random1d(a.z, b.z));
+}
+
+
+void NBody::centerAll()
+{
+    const size_t NP = particules.size();
+    double total_mass = 0.0;
+    Vect3d centralPos(0.0, 0.0, 0.0);
+    Vect3d centralVel(0.0, 0.0, 0.0);
+
+    for (size_t i = 0; i < NP; ++i) {
+        total_mass += particules[i].m();
+        centralPos += particules[i].p() * particules[i].m();
+        centralVel += particules[i].v() * particules[i].m();
+    }
+
+    centralPos /= total_mass;
+    centralVel /= total_mass;
+
+    for (size_t i = 0; i < NP; ++i) {
+        particules[i].p() -= centralPos;
+        particules[i].v() -= centralVel;
+    }
 }
 
 

@@ -1,8 +1,7 @@
 #include "vect3d.h"
 
 
-
-Vect3d::Vect3d(): x(0.0), y(0.0), z(0.0)
+Vect3d::Vect3d()
 {
 }
 
@@ -20,11 +19,49 @@ Vect3d Vect3d::operator+(const Vect3d &v) const
 }
 
 
+Vect3d Vect3d::operator*(double val) const
+{
+    return Vect3d(x * val,
+                  y * val,
+                  z * val);
+}
+
+
 Vect3d Vect3d::operator/(double den) const
 {
     return Vect3d(x / den,
                   y / den,
                   z / den);
+}
+
+
+const Vect3d& Vect3d::operator+=(const Vect3d &v)
+{
+    x += v.x;
+    y += v.y;
+    z += v.z;
+
+    return *this;
+}
+
+
+const Vect3d& Vect3d::operator-=(const Vect3d &v)
+{
+    x -= v.x;
+    y -= v.y;
+    z -= v.z;
+
+    return *this;
+}
+
+
+const Vect3d& Vect3d::operator/=(double den)
+{
+    x /= den;
+    y /= den;
+    z /= den;
+
+    return *this;
 }
 
 
