@@ -58,6 +58,9 @@ private:
 
     void centerAll();
 
+    double totalPotentialEnergy() const;
+    double totalKineticEnergy() const;
+
 private:
     // Random number variables
     std::random_device rd;

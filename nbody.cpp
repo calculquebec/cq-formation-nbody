@@ -191,6 +191,19 @@ void NBody::integrate()
         // Set the center of mass and it's speed to 0
         centerAll();
     }
+
+    if (bounded_state) {
+        // Make sure that the total energy of the system is negative
+        // so particle don't fly in the distance
+        // Set the kinetic energy to half the potential energy
+        double U = totalPotentialEnergy();
+        double K = totalKineticEnergy();
+        double alpha = std::sqrt(0.5 * U / K);
+
+        for (size_t i = 0; i < NP; ++i) {
+             particules[i].v() *= alpha;
+        }
+    }
 }
 
 
@@ -226,6 +239,34 @@ void NBody::centerAll()
         particules[i].p() -= centralPos;
         particules[i].v() -= centralVel;
     }
+}
+
+
+double NBody::totalPotentialEnergy() const
+{
+    const size_t NP = particules.size();
+    double U = 0.0;
+
+    for (size_t i = 0; i < NP; ++i) {
+        for (size_t j = i + 1; j < NP; ++j) {
+            U += particules[i].potentialEnergy(particules[j], epsilon);
+        }
+    }
+
+    return U;
+}
+
+
+double NBody::totalKineticEnergy() const
+{
+    const size_t NP = particules.size();
+    double K = 0.0;
+
+    for (size_t i = 0; i < NP; ++i) {
+        K += particules[i].kineticEnergy();
+    }
+
+    return K;
 }
 
 

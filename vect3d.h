@@ -7,7 +7,10 @@ public:
     Vect3d();
     Vect3d(double x_, double y_, double z_);
 
+    double dotProd(const Vect3d &v) const;
+
     Vect3d operator+(const Vect3d &v) const;
+    Vect3d operator-(const Vect3d &v) const;
 
     Vect3d operator*(double val) const;
     Vect3d operator/(double den) const;
@@ -15,6 +18,7 @@ public:
     const Vect3d& operator+=(const Vect3d &v);
     const Vect3d& operator-=(const Vect3d &v);
 
+    const Vect3d& operator*=(double val);
     const Vect3d& operator/=(double den);
 
 public:

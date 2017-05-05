@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "particule.h"
 
 
@@ -57,6 +59,19 @@ const Vect3d& Particule::v() const
 Vect3d& Particule::v()
 {
     return velocity;
+}
+
+
+double Particule::potentialEnergy(const Particule &part, const double epsilon) const
+{
+    Vect3d delta = position - part.position;
+    return mass * part.mass / std::sqrt(epsilon + delta.dotProd(delta));
+}
+
+
+double Particule::kineticEnergy() const
+{
+    return 0.5 * mass * velocity.dotProd(velocity);
 }
 
 

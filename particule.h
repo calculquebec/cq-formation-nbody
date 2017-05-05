@@ -23,6 +23,9 @@ public:
     const Vect3d& v() const;
     Vect3d& v();
 
+    double potentialEnergy(const Particule &part, const double epsilon = 0.0) const;
+    double kineticEnergy() const;
+
 private:
     double mass;
     Vect3d position;
