@@ -1,7 +1,10 @@
 #include <cassert>
 #include <ctime>
-#include <limits>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <limits>
+#include <sstream>
 
 #include "nbody.h"
 
@@ -204,6 +207,32 @@ void NBody::integrate()
              particules[i].v() *= alpha;
         }
     }
+
+    if (algo == Verlet) {
+        integrateVerlet();
+    }
+    else if (algo == Runge_Kutta) {
+        integrateRungeKutta();
+    }
+    else {
+        std::cerr << "Unsupported algorithm : " << algo << std::endl;
+    }
+}
+
+
+void NBody::integrateVerlet()
+{
+    const size_t NP = particules.size();
+
+    for (int iter = 0; iter < NT; ++iter) {
+        writeState(iter);
+    }
+}
+
+
+void NBody::integrateRungeKutta()
+{
+    std::cerr << "NBody::integrateRungeKutta() not yet implemented" << std::endl;
 }
 
 
@@ -267,6 +296,44 @@ double NBody::totalKineticEnergy() const
     }
 
     return K;
+}
+
+
+void NBody::writeState(const int iter)
+{
+    const size_t NP = particules.size();
+
+    if (iter % 100 == 0) {
+        std::cout << double(iter) * dt << "  "
+            << (totalKineticEnergy() + totalPotentialEnergy()) / NP
+            << std::endl;
+    }
+
+    if (iter % write_freq == 0) {
+        int zero = 0;
+        std::stringstream sstream;
+        sstream << "nbody_" << iter << ".mol";
+
+        std::string filename = sstream.str();
+        std::ofstream s(filename.c_str());
+
+        s << "nbody_" << iter << std::endl;
+        s << "  MOE2000" << std::endl;
+        s << std::endl;
+        s << std::setw(3) << NP;
+        s << std::setw(3) << zero;
+        s << " 0  0  0  0  0  0  0  0   1 V2000" << std::endl;
+
+        for (size_t i = 0; i < NP; ++i) {
+            s << particules[i].p() << " ";
+            s << std::setw(3) << std::setiosflags(std::ios::left) << "C";
+            s << std::resetiosflags(std::ios::left) << " 0  0  0  0  0  0  0  0  0  0  0  0" << std::endl;
+        }
+
+        s << "M  END" << std::endl;
+        s << "$$$$" << std::endl;
+        s.close();
+    }
 }
 
 

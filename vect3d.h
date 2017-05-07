@@ -1,6 +1,10 @@
 #ifndef VECT3D_H
 #define VECT3D_H
 
+
+#include <ostream>
+
+
 class Vect3d
 {
 public:
@@ -27,6 +31,9 @@ public:
         double comp[3];
     };
 };
+
+
+std::ostream& operator<<(std::ostream &ostr, const Vect3d &v);
 
 
 #endif // VECT3D_H

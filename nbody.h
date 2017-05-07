@@ -53,6 +53,9 @@ public:
     void integrate();
 
 private:
+    void integrateVerlet();
+    void integrateRungeKutta();
+
     double random1d(double a, double b);
     Vect3d random3d(const Vect3d &a, const Vect3d &b);
 
@@ -60,6 +63,8 @@ private:
 
     double totalPotentialEnergy() const;
     double totalKineticEnergy() const;
+
+    void writeState(const int iter);
 
 private:
     // Random number variables

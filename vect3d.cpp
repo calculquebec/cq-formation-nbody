@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "vect3d.h"
 
 
@@ -88,6 +90,17 @@ const Vect3d& Vect3d::operator/=(double den)
     z /= den;
 
     return *this;
+}
+
+
+std::ostream& operator<<(std::ostream &ostr, const Vect3d &v)
+{
+    for (int j = 0; j < 3; j++) {
+        ostr << std::setw(10) << std::setprecision(4)
+             << std::setiosflags(std::ios::fixed) << v.comp[j];
+    }
+
+    return ostr;
 }
 
 
