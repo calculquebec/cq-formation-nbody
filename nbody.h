@@ -102,6 +102,17 @@ private:
 };
 
 
+class FourthOrderRungeKutta
+{
+public:
+    Vect3d pos;
+    struct { Vect3d vel; Vect3d acc; } k1;
+    struct { Vect3d vel; Vect3d acc; } k2;
+    struct { Vect3d vel; Vect3d acc; } k3;
+    struct { Vect3d vel; Vect3d acc; } k4;
+
+};
+
 #endif // NBODY_H
 
 

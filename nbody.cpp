@@ -253,7 +253,57 @@ void NBody::integrateVerlet()
 
 void NBody::integrateRungeKutta()
 {
-    std::cerr << "NBody::integrateRungeKutta() not yet implemented" << std::endl;
+    const size_t NP = particules.size();
+    std::vector<FourthOrderRungeKutta> r(NP);
+
+    for (int iter = 0; iter < NT; ++iter) {
+        writeState(iter);
+
+        // Save all positions
+        for (size_t i = 0; i < NP; ++i) {
+            r[i].pos = particules[i].p();
+        }
+        computeAccelerations();
+
+        // Compute k1's
+        for (size_t i = 0; i < NP; ++i) {
+            r[i].k1.vel = particules[i].v();
+            r[i].k1.acc = particules[i].a();
+            particules[i].p() = r[i].pos + 0.5 * dt * r[i].k1.vel;
+        }
+        computeAccelerations();
+
+        // Compute k2's
+        for (size_t i = 0; i < NP; ++i) {
+            r[i].k2.vel = (1.0 + 0.5 * dt) * particules[i].v();
+            r[i].k2.acc = particules[i].a();
+            particules[i].p() = r[i].pos + 0.5 * dt * r[i].k2.vel;
+        }
+        computeAccelerations();
+
+        // Compute k3's
+        for (size_t i = 0; i < NP; ++i) {
+            r[i].k3.vel = (1.0 + 0.5 * dt * (1.0 + 0.5 * dt)) * particules[i].v();
+            r[i].k3.acc = particules[i].a();
+            particules[i].p() = r[i].pos + dt * r[i].k3.vel;
+        }
+        computeAccelerations();
+
+        // Compute k4's and final position and velocity
+        for (size_t i = 0; i < NP; ++i) {
+            r[i].k4.vel = (1.0 + dt * (1.0 + 0.5 * dt * (1.0 + 0.5 * dt))) * particules[i].v();
+            r[i].k4.acc = particules[i].a();
+
+            particules[i].p() = r[i].pos +
+                dt * (r[i].k1.vel + 2.0 * r[i].k2.vel + 2.0 * r[i].k3.vel + r[i].k4.vel) / 6.0;
+            particules[i].v() +=
+                dt * (r[i].k1.acc + 2.0 * r[i].k2.acc + 2.0 * r[i].k3.acc + r[i].k4.acc) / 6.0;
+        }
+
+        boundaryConditions();
+    }
+
+    writeState(NT);
 }
 
 
