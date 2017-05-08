@@ -26,6 +26,12 @@ void Particule::setVel(const Vect3d &vel)
 }
 
 
+void Particule::setAcc(const Vect3d &acc)
+{
+    acceleration = acc;
+}
+
+
 const double& Particule::m() const
 {
     return mass;
@@ -59,6 +65,18 @@ const Vect3d& Particule::v() const
 Vect3d& Particule::v()
 {
     return velocity;
+}
+
+
+const Vect3d& Particule::a() const
+{
+    return acceleration;
+}
+
+
+Vect3d& Particule::a()
+{
+    return acceleration;
 }
 
 

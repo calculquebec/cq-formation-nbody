@@ -64,6 +64,8 @@ private:
     double totalPotentialEnergy() const;
     double totalKineticEnergy() const;
 
+    void computeAccelerations();
+
     void writeState(const int iter);
 
 private:

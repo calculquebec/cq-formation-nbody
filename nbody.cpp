@@ -224,6 +224,8 @@ void NBody::integrateVerlet()
 {
     const size_t NP = particules.size();
 
+    computeAccelerations();
+
     for (int iter = 0; iter < NT; ++iter) {
         writeState(iter);
     }
@@ -296,6 +298,26 @@ double NBody::totalKineticEnergy() const
     }
 
     return K;
+}
+
+
+void NBody::computeAccelerations()
+{
+    const size_t NP = particules.size();
+
+    for (size_t i = 0; i < NP; ++i) {
+        Vect3d sum(0.0, 0.0, 0.0);
+
+        for (size_t j = 0; j < NP; ++j) {
+            if (i == j) continue;
+
+            Vect3d delta = particules[j].p() - particules[i].p();
+            double rij = std::sqrt(epsilon + delta.dotProd(delta));
+            sum += delta * particules[j].m() / (rij * rij * rij);
+        }
+
+        particules[i].setAcc(sum);
+    }
 }
 
 
