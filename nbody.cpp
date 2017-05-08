@@ -246,6 +246,8 @@ void NBody::integrateVerlet()
             particules[i].v() += 0.5 * particules[i].a() * dt;
         }
     }
+
+    writeState(NT);
 }
 
 
@@ -366,7 +368,7 @@ void NBody::writeState(const int iter)
 
     if (iter % 100 == 0) {
         std::cout << double(iter) * dt << "  "
-            << (totalKineticEnergy() + totalPotentialEnergy()) / NP
+            << (totalKineticEnergy() - totalPotentialEnergy()) / NP
             << std::endl;
     }
 
