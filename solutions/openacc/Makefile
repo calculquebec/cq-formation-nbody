@@ -1,11 +1,11 @@
 LIBS = -lm
 
-CXX = g++
+CXX = pgc++
 #CXX = icpc
 
 DEBUG = -g -Wall
 
-OPT = -O3 -march=native -funroll-loops -ffast-math -std=c++11
+OPT = -O3 -fast -std=c++11 -Minfo=all,accel,intensity -ta:tesla:managed
 #OPT = -O3 -xHost -ipo
 
 CXX_FLAGS = $(OPT) #-DVERLET
