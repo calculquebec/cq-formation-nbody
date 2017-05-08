@@ -10,7 +10,7 @@ OPT = -O3 -march=native -funroll-loops -ffast-math -std=c++11
 
 CXX_FLAGS = $(OPT) -DVERLET
 
-nbody: nbody.cpp global.h
+nbody: nbody.cpp global.h Makefile
 	$(CXX) $(CXX_FLAGS) -o nbody nbody.cpp $(LIBS)
 
 clean:
