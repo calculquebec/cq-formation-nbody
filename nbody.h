@@ -59,6 +59,7 @@ private:
     double random1d(double a, double b);
     Vect3d random3d(const Vect3d &a, const Vect3d &b);
 
+    void boundaryConditions();
     void centerAll();
 
     double totalPotentialEnergy() const;

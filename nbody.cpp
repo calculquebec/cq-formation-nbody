@@ -228,6 +228,23 @@ void NBody::integrateVerlet()
 
     for (int iter = 0; iter < NT; ++iter) {
         writeState(iter);
+
+        for (size_t i = 0; i < NP; ++i) {
+            particules[i].p() +=       particules[i].v() * dt +
+                                 0.5 * particules[i].a() * dt * dt;
+        }
+
+        boundaryConditions();
+
+        for (size_t i = 0; i < NP; ++i) {
+            particules[i].v() += 0.5 * particules[i].a() * dt;
+        }
+
+        computeAccelerations();
+
+        for (size_t i = 0; i < NP; ++i) {
+            particules[i].v() += 0.5 * particules[i].a() * dt;
+        }
     }
 }
 
@@ -247,6 +264,28 @@ double NBody::random1d(double a, double b)
 Vect3d NBody::random3d(const Vect3d &a, const Vect3d &b)
 {
     return Vect3d(random1d(a.x, b.x), random1d(a.y, b.y), random1d(a.z, b.z));
+}
+
+
+void NBody::boundaryConditions()
+{
+    if (!finite_domain) return;
+
+    const size_t NP = particules.size();
+
+    // Block_Size = Limit.max - Limit.min
+    const Vect3d bSize = L.max - L.min;
+
+    for (size_t i = 0; i < NP; ++i) {
+        // Relative_Position = Position - Limit.min
+        Vect3d relPos = particules[i].p() - L.min;
+
+        // Nb_Blocks = Relative_Position / Block_Size
+        // Nb_Blocks_I = floor(Nb_Blocks)
+        // Delta = Nb_Blocks_I * Block_Size
+        // New_Position = Position - Delta
+        particules[i].p() -= bSize * floor(relPos / bSize);
+    }
 }
 
 

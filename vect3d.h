@@ -15,6 +15,8 @@ public:
 
     Vect3d operator+(const Vect3d &v) const;
     Vect3d operator-(const Vect3d &v) const;
+    Vect3d operator*(const Vect3d &v) const;
+    Vect3d operator/(const Vect3d &v) const;
 
     Vect3d operator*(double val) const;
     Vect3d operator/(double den) const;
@@ -33,6 +35,8 @@ public:
 };
 
 
+Vect3d floor(const Vect3d &v);
+Vect3d operator*(double val, const Vect3d &v);
 std::ostream& operator<<(std::ostream &ostr, const Vect3d &v);
 
 

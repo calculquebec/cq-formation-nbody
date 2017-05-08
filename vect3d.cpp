@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iomanip>
 
 #include "vect3d.h"
@@ -34,6 +35,22 @@ Vect3d Vect3d::operator-(const Vect3d &v) const
     return Vect3d(x - v.x,
                   y - v.y,
                   z - v.z);
+}
+
+
+Vect3d Vect3d::operator*(const Vect3d &v) const
+{
+    return Vect3d(x * v.x,
+                  y * v.y,
+                  z * v.z);
+}
+
+
+Vect3d Vect3d::operator/(const Vect3d &v) const
+{
+    return Vect3d(x / v.x,
+                  y / v.y,
+                  z / v.z);
 }
 
 
@@ -90,6 +107,20 @@ const Vect3d& Vect3d::operator/=(double den)
     z /= den;
 
     return *this;
+}
+
+
+Vect3d floor(const Vect3d &v)
+{
+    return Vect3d(std::floor(v.x),
+                  std::floor(v.y),
+                  std::floor(v.z));
+}
+
+
+Vect3d operator*(double val, const Vect3d &v)
+{
+    return v * val;
 }
 
 
