@@ -61,7 +61,7 @@ void compute_acceleration(const double* x,const double* mass,double* acc)
 {
   int i,j,k;
   double delta,rij,pfactor,sum[3];
-#pragma omp parallel for private(i,j,k,delta,rij,pfactor,sum)
+#pragma omp parallel for private(j,k,delta,rij,pfactor,sum)
   for(i=0; i<NP; ++i) {
     for(j=0; j<3; ++j) {
       sum[j] = 0.0;
@@ -210,8 +210,8 @@ void integrate()
   if (bounded_state) {
     // Make sure that the total energy of the system is negative so particle don't fly in the distance
     // Set the kinetic energy to half the potential energy
-    U = compute_energy_p(x,v,mass);
-    K = compute_energy_k(x,v,mass);
+    U = compute_potential_energy(x,v,mass);
+    K = compute_kinetic_energy(x,v,mass);
     alpha = std::sqrt(U/(2.0*K));
 
     for(i=0; i<NP; ++i) {
@@ -241,7 +241,7 @@ void integrate()
     }
 
     // Print out the system's total energy per particle (should be fairly constant)
-    if (l%100 == 0) {
+    if (l%write_freq == 0) {
       std::cout << dt*double(l) << "  " << compute_energy(x,v,mass)/double(NP) << std::endl;
     }    
     if ((l % write_freq) == 0) write_state(l,xnew);
@@ -300,7 +300,7 @@ void integrate()
     boundary_conditions(xnew);
 
     // Print out the system's total energy per particle (should be fairly constant)
-    if (l%100 == 0) {
+    if (l%write_freq == 0) {
       std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
     }
     if ((l % write_freq) == 0) write_state(l,xnew);
