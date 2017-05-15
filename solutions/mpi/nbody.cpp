@@ -1,4 +1,15 @@
+#include <mpi.h>
+
 #include "global.h"
+
+
+int mpiRank = 0;
+int mpiSize = 1;
+int *counts1d = NULL;
+int *counts3d = NULL;
+int *displs1d = NULL;
+int *displs3d = NULL;
+
 
 double drandom(double x,double y)
 {
@@ -56,12 +67,16 @@ void boundary_conditions(double* x)
   }
 }
 
-void compute_acceleration(const double* x,const double* mass,double* acc)
+void compute_acceleration(double* x,const double* mass,double* acc)
 {
+  const int iLow  = displs1d[mpiRank];
+  const int iHigh = displs1d[mpiRank] + counts1d[mpiRank];
   int i,j,k;
   double delta,rij,pfactor,sum[3];
 
-  for(i=0; i<NP; ++i) {
+  MPI_Bcast(&x[0], 3 * NP, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  for(i=iLow; i<iHigh; ++i) {
     for(j=0; j<3; ++j) {
       sum[j] = 0.0;
     }
@@ -81,6 +96,10 @@ void compute_acceleration(const double* x,const double* mass,double* acc)
       acc[3*i+j] = -sum[j];
     }
   }
+
+  MPI_Gatherv(&acc[displs3d[mpiRank]], counts3d[mpiRank],  MPI_DOUBLE,
+              &acc[0],                 counts3d, displs3d, MPI_DOUBLE,
+              0, MPI_COMM_WORLD);
 }
 
 double compute_energy(const double* x,const double* v,const double* mass)
@@ -181,76 +200,86 @@ void integrate()
   double mass[NP],acc[3*NP],temp[3*NP];
   double K,U,alpha;
 
-  // Assign initial values...
-  for(i=0; i<NP; ++i) {
-    for(j=0; j<3; ++j) {
-      // Initial position and speed
-      x[3*i+j] = drandom(L[2*j],L[2*j+1]);
-      v[3*i+j] = drandom(-0.2,0.2);
-    }
-  }
-  // Assign random mass
-  for(i=0; i<NP; ++i) {
-    mass[i] = drandom(low_mass,high_mass);
-  }
-
-  // Add a rotation around the z axis
-  for(i=0; i<NP; ++i) {
-    v[3*i+1] += x[3*i+0]/10.0;
-    v[3*i+0] -= x[3*i+1]/10.0;
-  }
-
-  if (center_masses) {
-    // Set the center of mass and it's speed to 0
-    center_particles(x, mass);
-    center_particles(v, mass);
-  }
-
-  if (bounded_state) {
-    // Make sure that the total energy of the system is negative so particle don't fly in the distance
-    // Set the kinetic energy to half the potential energy
-    U = compute_potential_energy(x,v,mass);
-    K = compute_kinetic_energy(x,v,mass);
-    alpha = std::sqrt(U/(2.0*K));
-
+  if (mpiRank == 0) {
+    // Assign initial values...
     for(i=0; i<NP; ++i) {
       for(j=0; j<3; ++j) {
-        v[3*i+j] *= alpha;
+        // Initial position and speed
+        x[3*i+j] = drandom(L[2*j],L[2*j+1]);
+        v[3*i+j] = drandom(-0.2,0.2);
       }
     }
-  }
+    // Assign random mass
+    for(i=0; i<NP; ++i) {
+      mass[i] = drandom(low_mass,high_mass);
+    }
 
-  write_state(0,x);
-  std::cout << "0.0  " << compute_energy(x,v,mass)/double(NP) << std::endl;
+    // Add a rotation around the z axis
+    for(i=0; i<NP; ++i) {
+      v[3*i+1] += x[3*i+0]/10.0;
+      v[3*i+0] -= x[3*i+1]/10.0;
+    }
+
+    if (center_masses) {
+      // Set the center of mass and it's speed to 0
+      center_particles(x, mass);
+      center_particles(v, mass);
+    }
+
+    if (bounded_state) {
+      // Make sure that the total energy of the system is negative so particle don't fly in the distance
+      // Set the kinetic energy to half the potential energy
+      U = compute_potential_energy(x,v,mass);
+      K = compute_kinetic_energy(x,v,mass);
+      alpha = std::sqrt(U/(2.0*K));
+
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          v[3*i+j] *= alpha;
+        }
+      }
+    }
+  } // if (mpiRank == 0)
+
+  MPI_Bcast(&mass[0], NP, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  if (mpiRank == 0) {
+    write_state(0,x);
+    std::cout << "0.0  " << compute_energy(x,v,mass)/double(NP) << std::endl;
+  }
 
 #ifdef VERLET
   compute_acceleration(x,mass,acc);
   for(l=1; l<=NT; ++l) {
-    for(i=0; i<NP; ++i) {
-      for(j=0; j<3; ++j) {
-        xnew[3*i+j] = x[3*i+j] + dt*v[3*i+j] + 0.5*dt*dt*acc[3*i+j];
+    if (mpiRank == 0) {
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          xnew[3*i+j] = x[3*i+j] + dt*v[3*i+j] + 0.5*dt*dt*acc[3*i+j];
+        }
       }
+      boundary_conditions(xnew);
     }
-    boundary_conditions(xnew);
     compute_acceleration(xnew,mass,temp);
-    for(i=0; i<NP; ++i) {
-      for(j=0; j<3; ++j) {
-        vnew[3*i+j] = v[3*i+j] + 0.5*dt*(acc[3*i+j] + temp[3*i+j]);
+    if (mpiRank == 0) {
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          vnew[3*i+j] = v[3*i+j] + 0.5*dt*(acc[3*i+j] + temp[3*i+j]);
+        }
       }
-    }
 
-    // Print out the system's total energy per particle (should be fairly constant)
-    if (l%100 == 0) {
-      std::cout << dt*double(l) << "  " << compute_energy(x,v,mass)/double(NP) << std::endl;
-    }    
-    if ((l % write_freq) == 0) write_state(l,xnew);
+      // Print out the system's total energy per particle (should be fairly constant)
+      if (l%100 == 0) {
+        std::cout << dt*double(l) << "  " << compute_energy(x,v,mass)/double(NP) << std::endl;
+      }
+      if ((l % write_freq) == 0) write_state(l,xnew);
 
-    // Now update the arrays
-    for(i=0; i<NP; ++i) {
-      for(j=0; j<3; ++j) {
-        x[3*i+j] = xnew[3*i+j];
-        v[3*i+j] = vnew[3*i+j];
-        acc[3*i+j] = temp[3*i+j];
+      // Now update the arrays
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          x[3*i+j] = xnew[3*i+j];
+          v[3*i+j] = vnew[3*i+j];
+          acc[3*i+j] = temp[3*i+j];
+        }
       }
     }
   }
@@ -260,60 +289,70 @@ void integrate()
   
   for(l=1; l<=NT; ++l) {
     compute_acceleration(x,mass,acc);
-    for(i=0; i<NP; ++i) {
-      for(j=0; j<3; ++j) {
-        k1[3*i+j] = v[3*i+j];
-        k1[3*NP+3*i+j] = acc[3*i+j];
-        temp[3*i+j] = x[3*i+j] + 0.5*dt*k1[3*i+j];
+    if (mpiRank == 0) {
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          k1[3*i+j] = v[3*i+j];
+          k1[3*NP+3*i+j] = acc[3*i+j];
+          temp[3*i+j] = x[3*i+j] + 0.5*dt*k1[3*i+j];
+        }
       }
     }
     compute_acceleration(temp,mass,acc);
-    for(i=0; i<NP; ++i) {
-      for(j=0; j<3; ++j) {
-        k2[3*i+j] = (1.0 + 0.5*dt)*v[3*i+j];
-        k2[3*NP+3*i+j] = acc[3*i+j];
-        temp[3*i+j] = x[3*i+j] + 0.5*dt*k2[3*i+j];
+    if (mpiRank == 0) {
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          k2[3*i+j] = (1.0 + 0.5*dt)*v[3*i+j];
+          k2[3*NP+3*i+j] = acc[3*i+j];
+          temp[3*i+j] = x[3*i+j] + 0.5*dt*k2[3*i+j];
+        }
       }
     }
     compute_acceleration(temp,mass,acc);
-    for(i=0; i<NP; ++i) {
-      for(j=0; j<3; ++j) {
-        k3[3*i+j] = (1.0 + 0.5*dt + 0.25*dt*dt)*v[3*i+j];
-        k3[3*NP+3*i+j] = acc[3*i+j];
-        temp[3*i+j] = x[3*i+j] + dt*k3[3*i+j];
+    if (mpiRank == 0) {
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          k3[3*i+j] = (1.0 + 0.5*dt + 0.25*dt*dt)*v[3*i+j];
+          k3[3*NP+3*i+j] = acc[3*i+j];
+          temp[3*i+j] = x[3*i+j] + dt*k3[3*i+j];
+        }
       }
     }
     compute_acceleration(temp,mass,acc);
-    for(i=0; i<NP; ++i) {
-      for(j=0; j<3; ++j) {
-        k4[3*i+j] = (1.0 + dt + 0.5*dt*dt + 0.25*dt*dt*dt)*v[3*i+j];
-        k4[3*NP+3*i+j] = acc[3*i+j];
+    if (mpiRank == 0) {
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          k4[3*i+j] = (1.0 + dt + 0.5*dt*dt + 0.25*dt*dt*dt)*v[3*i+j];
+          k4[3*NP+3*i+j] = acc[3*i+j];
+        }
       }
-    }
-    for(i=0; i<NP; ++i) {
-      for(j=0; j<3; ++j) {
-        xnew[3*i+j] = x[3*i+j] + dt*(k1[3*i+j] + 2.0*k2[3*i+j] + 2.0*k3[3*i+j]+k4[3*i+j])/6.0;
-        vnew[3*i+j] = v[3*i+j] + dt*(k1[3*NP+3*i+j] + 2.0*k2[3*NP+3*i+j] + 2.0*k3[3*NP+3*i+j] + k4[3*NP+3*i+j])/6.0;
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          xnew[3*i+j] = x[3*i+j] + dt*(k1[3*i+j] + 2.0*k2[3*i+j] + 2.0*k3[3*i+j]+k4[3*i+j])/6.0;
+          vnew[3*i+j] = v[3*i+j] + dt*(k1[3*NP+3*i+j] + 2.0*k2[3*NP+3*i+j] + 2.0*k3[3*NP+3*i+j] + k4[3*NP+3*i+j])/6.0;
+        }
       }
-    }
-    boundary_conditions(xnew);
+      boundary_conditions(xnew);
 
-    // Print out the system's total energy per particle (should be fairly constant)
-    if (l%100 == 0) {
-      std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
-    }
-    if ((l % write_freq) == 0) write_state(l,xnew);
+      // Print out the system's total energy per particle (should be fairly constant)
+      if (l%100 == 0) {
+        std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
+      }
+      if ((l % write_freq) == 0) write_state(l,xnew);
 
-    // Now update the arrays
-    for(i=0; i<NP; ++i) {
-      for(j=0; j<3; ++j) {
-        x[3*i+j] = xnew[3*i+j];
-        v[3*i+j] = vnew[3*i+j];
+      // Now update the arrays
+      for(i=0; i<NP; ++i) {
+        for(j=0; j<3; ++j) {
+          x[3*i+j] = xnew[3*i+j];
+          v[3*i+j] = vnew[3*i+j];
+        }
       }
     }
   }
 #endif
-  write_state(NT,x);
+  if (mpiRank = 0) {
+    write_state(NT,x);
+  }
 }
 
 void read_parameters(const char* filename)
@@ -326,7 +365,7 @@ void read_parameters(const char* filename)
   if (!s.is_open()) {
     // If the file doesn't exist, we need to exit...
     std::cout << "The file " << filename << " cannot be found!" << std::endl;
-    std::exit(1);
+    MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
   // Loop through all lines in the parameter file
@@ -429,15 +468,42 @@ void read_parameters(const char* filename)
 
 int main(int argc,char** argv)
 {
+  MPI_Init(&argc, &argv);
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+  MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+
   if (argc > 2) {
-    std::cerr << "Usage: ./nbody parameters.txt" << std::endl;
-    return 0;
+    if (mpiRank == 0) {
+      std::cerr << "Usage: ./nbody parameters.txt" << std::endl;
+    }
+    MPI_Abort(MPI_COMM_WORLD, 0);
   }
 
   if (argc == 2) read_parameters(argv[1]);
 
+  // Calculer les comptes et déplacements selon NP
+  counts1d = new int[mpiSize];
+  counts3d = new int[mpiSize];
+  displs1d = new int[mpiSize];
+  displs3d = new int[mpiSize];
+
+  for (int r = 0; r < mpiSize; r++) {
+    int curr = NP * (r + 0) / mpiSize;
+    int next = NP * (r + 1) / mpiSize;
+
+    // Intervalles de travail de chaque processus
+    counts1d[r] = next - curr;
+    displs1d[r] = curr;
+
+    // Échange de 3 MPI_DOUBLE à la fois
+    counts3d[r] = 3 * counts1d[r];
+    displs3d[r] = 3 * displs1d[r];
+  }
+
   integrate();
 
+  MPI_Finalize();
   return 0;
 }
 
