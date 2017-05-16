@@ -105,7 +105,7 @@ double compute_energy(const double* x,const double* v,const double* mass)
       for(k=0; k<3; ++k) {
         delta += (x[3*i+k] - x[3*j+k])*(x[3*i+k] - x[3*j+k]);
       }
-      U += mass[i]*mass[j]/std::sqrt(epsilon + delta); 
+      U += mass[i]*mass[j]/std::sqrt((float)(epsilon + delta)); 
     }
   }
   return (0.5*T - U);  
@@ -138,7 +138,7 @@ double compute_potential_energy(const double* x,const double* v,const double* ma
       for(k=0; k<3; ++k) {
         delta += (x[3*i+k] - x[3*j+k])*(x[3*i+k] - x[3*j+k]);
       }
-      U += mass[i]*mass[j]/std::sqrt(epsilon + delta); 
+      U += mass[i]*mass[j]/std::sqrt((float)(epsilon + delta)); 
     }
   }
   return U;  
