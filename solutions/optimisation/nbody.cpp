@@ -240,7 +240,7 @@ void integrate()
     }
 
     // Print out the system's total energy per particle (should be fairly constant)
-    if (l%100 == 0) {
+    if (l%write_freq == 0) {
       std::cout << dt*double(l) << "  " << compute_energy(x,v,mass)/double(NP) << std::endl;
     }    
     if ((l % write_freq) == 0) write_state(l,xnew);
@@ -299,7 +299,7 @@ void integrate()
     boundary_conditions(xnew);
 
     // Print out the system's total energy per particle (should be fairly constant)
-    if (l%100 == 0) {
+    if (l%write_freq == 0) {
       std::cout << dt*double(l) << "  " << compute_energy(xnew,vnew,mass)/double(NP) << std::endl;
     }
     if ((l % write_freq) == 0) write_state(l,xnew);
