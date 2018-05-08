@@ -1,4 +1,5 @@
 #include "global.h"
+#include <accelmath.h>
 
 double drandom(double x,double y)
 {
