@@ -1,10 +1,10 @@
-#CXX = g++
-CXX = icpc
+CXX = g++
+#CXX = icpc
 
 DEBUG = -g -Wall
 
-#OPT = -O3 -march=native -funroll-loops -ffast-math -std=c++11
-OPT = -O3 -std=c++11 -xHost -ipo
+OPT = -O3 -march=native -funroll-loops -ffast-math -std=c++11
+#OPT = -O3 -std=c++11 -xHost -ipo
 
 CXX_FLAGS = -I../.. $(OPT) #-DVERLET
 
