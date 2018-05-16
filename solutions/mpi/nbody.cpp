@@ -503,6 +503,11 @@ int main(int argc,char** argv)
 
   integrate();
 
+  delete[] counts1d;
+  delete[] counts3d;
+  delete[] displs1d;
+  delete[] displs3d;
+
   MPI_Finalize();
   return 0;
 }
