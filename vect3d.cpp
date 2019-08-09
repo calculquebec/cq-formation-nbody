@@ -22,92 +22,39 @@ double Vect3d::dotProd(const Vect3d &v) const
 }
 
 
-Vect3d Vect3d::operator+(const Vect3d &v) const
-{
-    return Vect3d(x + v.x,
-                  y + v.y,
-                  z + v.z);
-}
+#define FNOP_VECT(op) Vect3d Vect3d::operator op(const Vect3d &vect) const \
+    { return Vect3d(x op vect.x, \
+                    y op vect.y, \
+                    z op vect.z); }
 
 
-Vect3d Vect3d::operator-(const Vect3d &v) const
-{
-    return Vect3d(x - v.x,
-                  y - v.y,
-                  z - v.z);
-}
+#define FNOP_SCAL(op) Vect3d Vect3d::operator op(const double  scal) const \
+    { return Vect3d(x op scal, \
+                    y op scal, \
+                    z op scal); }
 
 
-Vect3d Vect3d::operator*(const Vect3d &v) const
-{
-    return Vect3d(x * v.x,
-                  y * v.y,
-                  z * v.z);
-}
+#define FNOE_VECT(op) const Vect3d& Vect3d::operator op##=(const Vect3d &vect) \
+    { x op##= vect.x; \
+      y op##= vect.y; \
+      z op##= vect.z; \
+      return *this; }
 
 
-Vect3d Vect3d::operator/(const Vect3d &v) const
-{
-    return Vect3d(x / v.x,
-                  y / v.y,
-                  z / v.z);
-}
+#define FNOE_SCAL(op) const Vect3d& Vect3d::operator op##=(const double  scal) \
+    { x op##= scal; \
+      y op##= scal; \
+      z op##= scal; \
+      return *this; }
 
 
-Vect3d Vect3d::operator*(double val) const
-{
-    return Vect3d(x * val,
-                  y * val,
-                  z * val);
-}
+#define FNOP_LIST(op) FNOP_VECT(op) FNOP_SCAL(op) FNOE_VECT(op) FNOE_SCAL(op)
 
 
-Vect3d Vect3d::operator/(double den) const
-{
-    return Vect3d(x / den,
-                  y / den,
-                  z / den);
-}
-
-
-const Vect3d& Vect3d::operator+=(const Vect3d &v)
-{
-    x += v.x;
-    y += v.y;
-    z += v.z;
-
-    return *this;
-}
-
-
-const Vect3d& Vect3d::operator-=(const Vect3d &v)
-{
-    x -= v.x;
-    y -= v.y;
-    z -= v.z;
-
-    return *this;
-}
-
-
-const Vect3d& Vect3d::operator*=(double val)
-{
-    x *= val;
-    y *= val;
-    z *= val;
-
-    return *this;
-}
-
-
-const Vect3d& Vect3d::operator/=(double den)
-{
-    x /= den;
-    y /= den;
-    z /= den;
-
-    return *this;
-}
+FNOP_LIST(+)
+FNOP_LIST(-)
+FNOP_LIST(*)
+FNOP_LIST(/)
 
 
 Vect3d floor(const Vect3d &v)

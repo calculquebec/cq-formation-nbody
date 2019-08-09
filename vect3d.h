@@ -13,19 +13,17 @@ public:
 
     double dotProd(const Vect3d &v) const;
 
-    Vect3d operator+(const Vect3d &v) const;
-    Vect3d operator-(const Vect3d &v) const;
-    Vect3d operator*(const Vect3d &v) const;
-    Vect3d operator/(const Vect3d &v) const;
+    #define OP_VECT(op)       Vect3d  operator op   (const Vect3d &vect) const;
+    #define OP_SCAL(op)       Vect3d  operator op   (const double  scal) const;
+    #define OE_VECT(op) const Vect3d& operator op##=(const Vect3d &vect)      ;
+    #define OE_SCAL(op) const Vect3d& operator op##=(const double  scal)      ;
 
-    Vect3d operator*(double val) const;
-    Vect3d operator/(double den) const;
+    #define OP_LIST(op) OP_VECT(op) OP_SCAL(op) OE_VECT(op) OE_SCAL(op)
 
-    const Vect3d& operator+=(const Vect3d &v);
-    const Vect3d& operator-=(const Vect3d &v);
-
-    const Vect3d& operator*=(double val);
-    const Vect3d& operator/=(double den);
+    OP_LIST(+)
+    OP_LIST(-)
+    OP_LIST(*)
+    OP_LIST(/)
 
 public:
     union {
