@@ -1,5 +1,5 @@
 # Number of particles
-nparticle = 1618
+nparticle = 1680
 # Range of mass values for the particles
 min_mass = 1.0
 max_mass = 2.0
