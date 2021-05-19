@@ -3,6 +3,8 @@
 #include "global.h"
 #include <vector>
 #include <boost/mpi.hpp>
+#include <boost/serialization/vector.hpp>
+
 using namespace boost::mpi;
 using namespace std;
 

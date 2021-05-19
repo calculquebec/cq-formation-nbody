@@ -1,4 +1,4 @@
-LIBS = -lm -lboost_mpi
+LIBS = -lm -lboost_mpi -lboost_serialization
 
 CXX = mpic++
 #CXX = icpc
