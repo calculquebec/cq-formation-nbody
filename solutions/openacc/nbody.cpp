@@ -106,7 +106,7 @@ double compute_energy(const double*__restrict x,const double*__restrict v,const 
   #pragma acc kernels
   #pragma acc loop independent device_type(nvidia) gang, worker
   for(i=0; i<NP; ++i) {
-    #pragma acc loop independent device_type(nvidia) vector
+    #pragma acc loop independent device_type(nvidia) reduction(+:U) vector
     for(j=1+i; j<NP; ++j) {
       delta = 0.0;
       for(k=0; k<3; ++k) {
