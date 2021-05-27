@@ -1,6 +1,6 @@
 LIBS = -lm
 
-CXX = pgc++
+CXX = nvc++
 #CXX = icpc
 
 DEBUG = -g -Wall
