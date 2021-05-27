@@ -1,11 +1,11 @@
 LIBS = -lm
 
-CXX = pgc++
+CXX = nvc++
 #CXX = icpc
 
 DEBUG = -g -Wall
 
-OPT = -O3 -fast -std=c++11 -Minfo=accel -ta:tesla:managed
+OPT = -O3 -fast -std=c++11 -Minfo=accel -acc -gpu=managed
 #OPT = -O3 -xHost -ipo
 
 CXX_FLAGS = $(OPT) #-DVERLET
@@ -17,14 +17,3 @@ nbody_float: nbody_float.cpp global.h Makefile
 
 clean:
 	rm -f nbody nbody_float
-
-
-
-
-
-
-
-
-
-
-
