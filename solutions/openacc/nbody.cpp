@@ -43,16 +43,14 @@ void boundary_conditions(double* x)
         dsize = L[2*j+1] - L[2*j];
         do {
           xv += dsize;
-          if (xv > L[2*j]) break;
-        } while(true);
+        } while( xv <= L[2*j]);
         x[3*i+j] = xv;
       }
       else if (xv > L[2*j+1]) {
         dsize = L[2*j+1] - L[2*j];
         do {
           xv -= dsize;
-          if (xv < L[2*j+1]) break;
-        } while(true);
+        } while(xv >= L[2*j+1]);
         x[3*i+j] = xv;
       }
     }
