@@ -60,22 +60,30 @@ md5sum -c solutions/md5/rkutta_parameters_txt.md5
 
 ## Technical details
 
-This N body gravitational code is written in C++, the Makefile contains lines 
+This *N* body gravitational code is written in C++, the
+[`Makefile`](https://github.com/calculquebec/cq-formation-nbody/blob/main/Makefile) contains lines 
 where you can specify the C++ compiler as well as any necessary compilation and 
-linker flags. The resulting binary is called "nbody" and should be run with the 
-command 
-./nbody [parameter file]
-An example of a parameter file is provided (parameters.txt); if no parameter 
+linker flags. The resulting binary is called "`nbody`" and should be run with the 
+command:
+```
+./nbody <parameter_file>
+```
+
+An example of a parameter file is provided
+([`parameters.txt`](https://github.com/calculquebec/cq-formation-nbody/blob/main/parameters.txt)); if no parameter 
 file is supplied to the program, it runs with the default parameter values 
-that are shown in the global.h header file. The program periodically writes 
-out the particle positions to an MDL MOL file that can be visualized using a 
-free tool like Jmol or PyMOL. 
+that are shown in the [`global.h` header file](https://github.com/calculquebec/cq-formation-nbody/blob/main/global.h).
+The program periodically writes out the particle positions to an MDL `.mol`
+file that can be visualized using a free tool like Jmol or PyMOL. 
 
 The program is based on a direct (particle-particle) method and uses either 
 the velocity Verlet or the fourth-order Runge-Kutta algorithm to numerically 
 integrate the first-order system
-x_i' = v_i
-v_i' = \sum{j=1,j\ne i}^N m_j (x_i - x_j)/(eps + r_{ij}^2)^(3/2)
+
+![equation](https://latex.codecogs.com/png.latex?x_i'=v_i)
+
+![equation](https://latex.codecogs.com/png.latex?v_i%27=\sum_{j=1,j\ne{i}}^N%20m_j%20\frac{(x_i-x_j)}{(\epsilon+r_{ij}^2)^{3/2}})
+
 where x_i and v_i are the position and velocity of the i-th particle, m_i its
 mass and r_ij is the L2 distance between x_i and x_j. The force softening
 parameter eps is included to avoid singularities caused by near collisions of 
