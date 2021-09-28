@@ -85,12 +85,18 @@ to numerically integrate the first-order system:
 
 ![equation](https://latex.codecogs.com/png.latex?\frac{dv_i}{dt}=\sum_{j=1,j\ne{i}}^N%20m_j%20\frac{(x_i-x_j)}{(\epsilon+r_{ij}^2)^{3/2}})
 
-where x_i and v_i are the position and velocity of the i-th particle, m_i its
-mass and r_ij is the L2 distance between x_i and x_j. The force softening
-parameter eps is included to avoid singularities caused by near collisions of 
+where ![equation](https://latex.codecogs.com/png.latex?x_i)
+and ![equation](https://latex.codecogs.com/png.latex?v_i)
+are the position and velocity of the ![equation](https://latex.codecogs.com/png.latex?i)-th particle,
+![equation](https://latex.codecogs.com/png.latex?m_i) its
+mass and ![equation](https://latex.codecogs.com/png.latex?r_{ij}) is the L2 distance
+between ![equation](https://latex.codecogs.com/png.latex?x_i)
+and ![equation](https://latex.codecogs.com/png.latex?x_j). The force softening
+parameter ![equation](https://latex.codecogs.com/png.latex?\epsilon)
+is included to avoid singularities caused by near collisions of 
 the particles and should be small and positive. The integration algorithm 
 used is controlled by the compilation flag VERLET. The particle motions are 
-confined to a toroidal box when the parameter "finite_domain" is set to true. 
+confined to a toroidal box when the parameter "`finite_domain`" is set to `true`.
 The console output consists of the time value and total energy per particle, 
 written out every hundred timesteps. 
       
