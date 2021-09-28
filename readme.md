@@ -96,7 +96,8 @@ parameter ![equation](https://latex.codecogs.com/png.latex?\epsilon)
 is included to avoid singularities caused by near collisions of 
 the particles and should be small and positive. The integration algorithm 
 used is controlled by the compilation flag VERLET. The particle motions are 
-confined to a toroidal box when the parameter "`finite_domain`" is set to `true`.
+confined to a toroidal box when the parameter
+[`finite_domain`](https://github.com/calculquebec/cq-formation-nbody/blob/main/parameters.txt#L22) is set to `yes`.
 The console output consists of the time value and total energy per particle, 
 written out every hundred timesteps. 
       
