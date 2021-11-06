@@ -177,17 +177,25 @@ void NBody::integrate()
 
     // Assign initial values...
     for (size_t i = 0; i < NP; ++i) {
-        // Assign random mass
-        particules[i].setMass(random1d(low_mass, high_mass));
+        Vect3d newPos, newVel;
+
+        // For x, y and z
+        for (size_t c = 0; c < 3; c++) {
+            newPos.comp[c] = random1d(L.min.comp[c], L.max.comp[c]);
+            newVel.comp[c] = random1d(V_min.comp[c], V_max.comp[c]);
+        }
 
         // Initial position
-        Vect3d newPos = random3d(L.min, L.max);
         particules[i].setPos(newPos);
 
         // Initial speed - add a rotation around the z axis
-        Vect3d newVel = random3d(V_min, V_max) +
-                        Vect3d(-newPos.y, newPos.x, 0) / 10;
-        particules[i].setVel(newVel);
+        particules[i].setVel(newVel + Vect3d(-newPos.y, newPos.x, 0) / 10);
+    }
+
+    // For each particule
+    for (size_t i = 0; i < NP; ++i) {
+        // Assign random mass
+        particules[i].setMass(random1d(low_mass, high_mass));
     }
 
     if (center_masses) {
