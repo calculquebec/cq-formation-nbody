@@ -75,8 +75,8 @@ void compute_acceleration(const double *__restrict x,const double *__restrict ma
       for(k=0; k<3; ++k) {
         delta += (x[3*i+k] - x[3*j+k])*(x[3*i+k] - x[3*j+k]);
       }
-      rij = std::sqrt(epsilon + delta);
-      pfactor = mass[j]/(rij*rij*rij);
+      rij = 1.0f/std::sqrt((float)(epsilon + delta));
+      pfactor = mass[j]*(rij*rij*rij);
       sum0 += pfactor*(x[3*i+0] - x[3*j+0]);
       sum1 += pfactor*(x[3*i+1] - x[3*j+1]);
       sum2 += pfactor*(x[3*i+2] - x[3*j+2]);
