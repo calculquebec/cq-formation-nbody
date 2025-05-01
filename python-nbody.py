@@ -42,7 +42,7 @@ def write_state(timestep, x):
     f.write("  MOE2000\n")
     f.write("\n")
     f.write(f"{x.shape[1]:3d}{0:3d} 0  0  0  0  0  0  0  0   1 V2000\n")
-    for row in x:
+    for row in x.transpose():
         f.write(f"{row[0]:10.4f}{row[1]:10.4f}{row[2]:10.4f} C   0  0  0  0  0  0  0  0  0  0  0  0\n")
     f.write("M  END\n")
     f.write("$$$$\n")
