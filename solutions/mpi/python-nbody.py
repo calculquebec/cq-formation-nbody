@@ -1,0 +1,308 @@
+import sys
+import numpy as np
+from mpi4py import MPI  # MPI.Init() implicite
+
+# Number of particles
+NP = 100
+# Number of time steps
+NT = 10
+tvalue = 0.5
+# Random number seed 
+seed = 0
+# Frequency of writing position values to disk
+write_freq = 2
+# Particle mass is drawn uniformly from the  
+# interval [low_mass,high_mass)
+low_mass = 1.0
+high_mass = 5.0
+# Time increment in ODE solver
+dt = 0.05
+# Force softening
+epsilon = 0.00000000001
+# Use a finite domain with toroidal boundary 
+# conditions?
+finite_domain = False
+# The dimensions of the finite domain
+L = np.array([0.0,100.0,0.0,100.0,0.0,50.0])
+# Condition for "bound state" of the particles
+bounded_state = True
+# Fix the center of mass at 0
+center_masses = True
+# Use Runge-Kutta
+VERLET = False
+
+def drandom(x, y, size):
+    out = np.random.randint(256**4, dtype='<u4', size=size)
+    out = out / (256.0*256*256*256)
+    out = x + (y - x)*out
+    return out
+
+def write_state(timestep, x):
+    f = open("nbody_%s.mol" % timestep, "w")
+    f.write("nbody_%s\n" % timestep)
+    f.write("  MOE2000\n")
+    f.write("\n")
+    f.write(f"{x.shape[1]:3d}{0:3d} 0  0  0  0  0  0  0  0   1 V2000\n")
+    for row in x.transpose():
+        f.write(f"{row[0]:10.4f}{row[1]:10.4f}{row[2]:10.4f} C   0  0  0  0  0  0  0  0  0  0  0  0\n")
+    f.write("M  END\n")
+    f.write("$$$$\n")
+    f.close()
+
+def boundary_conditions(x):
+    if finite_domain:
+        minimum = L[::2]
+        maximum = L[1::2]
+        dsize = maximum - minimum
+        x[:,:] = (x - minimum) % dsize + minimum
+                    
+def compute_acceleration(x, mass, comm):
+    """
+    Calcul de l'accélération immédiate de chaque particule
+
+    x - matrice de float64, taille (3, NP), une position x,y,z par particule
+        x_0  x_1  x_2  x_3  x_4  x_5  ...  x_NP-1
+        y_0  y_1  y_2  y_3  y_4  y_5  ...  y_NP-1
+        z_0  z_1  z_2  z_3  z_4  z_5  ...  z_NP-1
+    mass - vecteur de float64, taille (NP,)
+        m_0  m_1  m_2  m_3  m_4  m_5  ...  m_NP-1
+    comm - communicateur MPI
+
+    Retourne : l'accélération immédiate selon x,y,z pour chaque particule,
+        soit une matrice de float64, taille (3, NP)
+    """
+
+    rank, nranks = comm.Get_rank(), comm.Get_size()
+    debut = NP * rank // nranks
+    fin = NP * (rank + 1) // nranks
+
+    # Distance vectorielle entre chaque paire de particules, taille (3, NP, NP)
+    #   Axe 0 : matrice par matrice (composantes x, y et z)
+    #   Axe 1 : ligne par ligne
+    #   Axe 2 : colonne par colonne
+    # x_0-x_0 ... x_NP-1-x_0 | y_0-y_0 ... y_NP-1-y_0 | z_0-z_0 ... z_NP-1-z_0
+    # x_0-x_1 ... x_NP-1-x_1 | y_0-y_1 ... y_NP-1-y_1 | z_0-z_1 ... z_NP-1-z_1
+    # ...                    | ...                    | ...
+    # x_0-x_NP-1     ...     | y_0-y_NP-1     ...     | z_0-z_NP-1 ...
+
+    diffs = np.subtract(x[:,np.newaxis,debut:fin], x[:,:,np.newaxis])
+
+    # Distances : r = sqrt(x^2 + y^2 + z^2 + epsilon)  # taille (NP, NP)
+    # pfactor = mass / r^3  # une masse par colonne, taille (NP, NP)
+    #   m_0 / r_0,0^3     m_1 / r_0,1^3     ...  m_NP-1 / r_0,NP-1^3
+    #   m_0 / r_1,0^3     m_1 / r_1,1^3     ...  m_NP-1 / r_1,NP-1^3
+    #   ...
+    #   m_0 / r_NP-1,0^3  m_1 / r_NP-1,1^3  ...  m_NP-1 / r_NP-1,NP-1^3
+
+    pfactor = mass[debut:fin]/np.sqrt(np.sum(diffs**2, axis=0) + epsilon)**3
+
+    # Annuler le pfactor pour chaque particule avec elle-même (pfactor_k,k = 0)
+    np.fill_diagonal(pfactor[debut:fin, :], 0.0)
+
+    # Pour chaque composante x, y et z, multiplier la différence par le
+    # pfactor correspondant. Dans la multiplication valeur par valeur :
+    # - L'axe 1 de diffs est aligné selon l'axe 0 de pfactor (ligne par ligne)
+    # - L'axe 2 de diffs est aligné selon l'axe 1 de pfactor (colonne par col.)
+    # - Le produit donne une taille de (3, NP, NP)
+    # Somme finale le long de l'axe des différentes masses (colonne par col.)
+    # Retourne les accélérations, taille (3, NP)
+
+    acc_locales = np.sum(diffs*pfactor, axis=2)
+    acc = np.empty(acc_locales.shape)
+    comm.Allreduce(acc_locales, acc)
+
+    return acc
+
+def compute_energy(x, v, mass):
+    # First the kinetic energy...
+    T = compute_kinetic_energy(x,v,mass)
+    # Now the potential energy
+    U = compute_potential_energy(x,v,mass)
+    return T - U
+
+def compute_kinetic_energy(x, v, mass):
+    return 0.5*np.sum(np.dot(v**2, mass))
+
+def compute_potential_energy(x, v, mass):
+    U = 0.0
+    for i in range(x.shape[1]):
+        diff = x[:,i][:,np.newaxis] - x[:,1+i:]
+        delta = np.sum(diff**2, axis=0)
+        U += mass[i]*np.sum(mass[1+i:]/np.sqrt(epsilon+delta))
+    return U
+
+def compute_center_of_mass(x, mass):
+    return np.dot(x, mass) / np.sum(mass)
+
+def center_particles(x, mass):
+    x -= compute_center_of_mass(x, mass)[:,np.newaxis]
+
+def integrate(comm):
+    """
+    Intégration itérative de la position de NP particules
+
+    comm - communicateur MPI
+    """
+
+    rank = comm.Get_rank()
+
+    # Assign initial values...
+    randoms = np.random.randint(256**4, dtype='<u4', size=2*3*NP) / (256.0*256*256*256)
+
+    # Initial position and speed
+    widths = (L[1::2] - L[::2])[:,np.newaxis]
+    x = (L[::2][:,np.newaxis] +
+         widths * randoms[::2].reshape((NP,3)).transpose().copy())
+    v = -0.2 + 0.4 * randoms[1::2].reshape((NP,3)).transpose().copy()
+
+    # Assign random mass
+    mass = drandom(low_mass,high_mass,NP)
+
+    # Add a rotation around the z axis
+    v[1,:] += x[0,:]/10.0
+    v[0,:] -= x[1,:]/10.0
+
+    if center_masses:
+        # Set the center of mass and it's speed to 0
+        center_particles(x, mass)
+        center_particles(v, mass)
+
+    if bounded_state:
+        # Make sure that the total energy of the system is negative so particle don't fly in the distance
+        # Set the kinetic energy to half the potential energy
+        U = compute_potential_energy(x,v,mass)
+        K = compute_kinetic_energy(x,v,mass)
+        alpha = np.sqrt(U/(2.0*K))
+        v *= alpha
+
+    if rank == 0:
+        write_state(0,x)
+        print(f"0.0  {compute_energy(x,v,mass)/NP:g}")
+
+    if VERLET:
+        acc = compute_acceleration(x, mass, comm)
+        for l in range(1,NT+1):
+            # Print out the system's total energy per particle (should be fairly constant)
+            if rank == 0 and l%write_freq == 0:
+                print(f"{dt*float(l):g}  {compute_energy(x,v,mass)/NP:g}")
+
+            # Now update the arrays
+            x += dt*v + 0.5*dt*dt*acc
+            boundary_conditions(x)
+            temp = compute_acceleration(x, mass, comm)
+            v += 0.5*dt*(acc + temp)
+            acc = temp
+            if rank == 0 and l%write_freq == 0:
+                write_state(l,x)
+    else:
+        # Fourth-order Runge-Kutta
+        for l in range(1,NT+1):
+            acc = compute_acceleration(x, mass, comm)
+            k1 = [v, acc]
+            acc = compute_acceleration(x + 0.5*dt*k1[0], mass, comm)
+            k2 = [(1.0 + 0.5*dt)*v, acc]
+            acc = compute_acceleration(x + 0.5*dt*k2[0], mass, comm)
+            k3 = [(1.0 + 0.5*dt + 0.25*dt*dt)*v, acc]
+            acc = compute_acceleration(x + dt*k3[0], mass, comm)
+            k4 = [(1.0 + dt + 0.5*dt*dt + 0.25*dt*dt*dt)*v, acc]
+            # Now update the arrays
+            x += dt*(k1[0] + 2*k2[0] + 2*k3[0] + k4[0])/6.0
+            v += dt*(k1[1] + 2*k2[1] + 2*k3[1] + k4[1])/6.0
+
+            boundary_conditions(x)
+
+            # Print out the system's total energy per particle (should be fairly constant)
+            if rank == 0 and l%write_freq == 0:
+                print(f"{dt*float(l):g}  {compute_energy(x,v,mass)/NP:g}")
+                write_state(l,x)
+
+    if rank == 0:
+        write_state(NT,x)
+
+def read_parameters(filename):
+    global NT, NP, tvalue, seed, dt, epsilon, low_mass, high_mass, write_freq
+    global finite_domain, center_masses, bounded_state, L
+    try:
+        s = open(filename, "r")
+    except:
+        # If the file doesn't exist, we need to exit...
+        print(f"The file {filename} cannot be found!")
+        sys.exit(1)
+
+    # Loop through all lines in the parameter file
+    param = dict(
+        nparticle = str(NP),
+        max_time = str(tvalue),
+        seed = str(seed),
+        timestep = str(dt),
+        epsilon = str(epsilon),
+        min_mass = str(low_mass),
+        max_mass = str(high_mass),
+        write_frequency = str(write_freq),
+        finite_domain = "yes" if finite_domain else "no",
+        center_of_mass = "yes" if center_masses else "no",
+        bound_state = "yes" if bounded_state else "no",
+        xmin = str(L[0]),
+        xmax = str(L[1]),
+        ymin = str(L[2]),
+        ymax = str(L[3]),
+        zmin = str(L[4]),
+        zmax = str(L[5]),
+    )
+    for line in s:
+        # If it's an empty line, or if the line begins with a #, or
+        # if there's no equals sign in this line, ignore it
+        if line != "\n" and line[0] != '#' and '=' in line:
+            # Assumes that the equals sign can only occur once in 
+            # the line
+            name, value = map(str.strip, line.split('=', 1))
+            param[name] = value
+
+    # Now that we have the parameter name, see if it matches
+    # any of the known parameters. If so, read in the value and
+    # assign it
+    NP = int(param["nparticle"])
+    tvalue = float(param["max_time"])
+    seed = int(param["seed"])
+    dt = float(param["timestep"])
+    epsilon = float(param["epsilon"])
+    low_mass = float(param["min_mass"])
+    high_mass = float(param["max_mass"])
+    write_freq = int(param["write_frequency"])
+    finite_domain = param["finite_domain"] == "yes"
+    center_masses = param["center_of_mass"] == "yes"
+    bounded_state = param["bound_state"] == "yes"
+    L = np.array([float(param[name]) for name in ["xmin", "xmax", "ymin", "ymax", "zmin", "zmax"]])
+    s.close()
+    # Sanity checks
+    assert tvalue > np.finfo(float).eps
+    assert NP > 1
+    assert dt > np.finfo(float).eps
+    assert epsilon > np.finfo(float).eps and epsilon < 0.1
+    assert write_freq > 0
+    assert low_mass > np.finfo(float).eps
+    assert high_mass >= low_mass
+    assert seed >= 0
+    for i in range(3):
+        assert L[2*i+1] > L[2*i]
+    if seed == 0:
+        seed = None
+    np.random.seed(seed)
+    NT = int(tvalue/dt)
+
+def main():
+    if len(sys.argv) > 2:
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            sys.stderr.write(
+                "Usage: srun python python-nbody.py [parameters.txt]\n")
+        sys.exit(0)
+
+    if len(sys.argv) == 2:
+        read_parameters(sys.argv[1])
+
+    integrate(MPI.COMM_WORLD)
+
+    MPI.Finalize()
+
+if __name__ == '__main__':
+    main()
