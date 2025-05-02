@@ -74,10 +74,10 @@ def compute_acceleration(x, mass):
     #   Axe 0 : matrice par matrice (composantes x, y et z)
     #   Axe 1 : ligne par ligne
     #   Axe 2 : colonne par colonne
-    # x_0-x_0 ... x_0-x_NP-1 | y_0-y_0 ... y_0-y_NP-1 | z_0-z_0 ... z_0-z_NP-1
-    # x_1-x_0 ... x_1-x_NP-1 | y_1-y_0 ... y_1-y_NP-1 | z_1-z_0 ... z_1-z_NP-1
+    # x_0-x_0 ... x_NP-1-x_0 | y_0-y_0 ... y_NP-1-y_0 | z_0-z_0 ... z_NP-1-z_0
+    # x_0-x_1 ... x_NP-1-x_1 | y_0-y_1 ... y_NP-1-y_1 | z_0-z_1 ... z_NP-1-z_1
     # ...                    | ...                    | ...
-    # x_NP-1-x_0     ...     | y_NP-1-y_0     ...     | z_NP-1-z_0 ...
+    # x_0-x_NP-1     ...     | y_0-y_NP-1     ...     | z_0-z_NP-1 ...
 
     diffs = np.subtract(x[:,np.newaxis,:], x[:,:,np.newaxis])
 
