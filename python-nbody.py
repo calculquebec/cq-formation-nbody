@@ -56,9 +56,51 @@ def boundary_conditions(x):
         x[:,:] = (x - minimum) % dsize + minimum
                     
 def compute_acceleration(x, mass):
+    """
+    Calcul de l'accélération immédiate de chaque particule
+
+    x - matrice de float64, taille (3, NP), une position x,y,z par particule
+        x_0  x_1  x_2  x_3  x_4  x_5  ...  x_NP-1
+        y_0  y_1  y_2  y_3  y_4  y_5  ...  y_NP-1
+        z_0  z_1  z_2  z_3  z_4  z_5  ...  z_NP-1
+    mass - vecteur de float64, taille (NP,)
+        m_0  m_1  m_2  m_3  m_4  m_5  ...  m_NP-1
+
+    Retourne : l'accélération immédiate selon x,y,z pour chaque particule,
+        soit une matrice de float64, taille (3, NP)
+    """
+
+    # Distance vectorielle entre chaque paire de particules, taille (3, NP, NP)
+    #   Axe 0 : matrice par matrice (composantes x, y et z)
+    #   Axe 1 : ligne par ligne
+    #   Axe 2 : colonne par colonne
+    # x_0-x_0 ... x_0-x_NP-1 | y_0-y_0 ... y_0-y_NP-1 | z_0-z_0 ... z_0-z_NP-1
+    # x_1-x_0 ... x_1-x_NP-1 | y_1-y_0 ... y_1-y_NP-1 | z_1-z_0 ... z_1-z_NP-1
+    # ...                    | ...                    | ...
+    # x_NP-1-x_0     ...     | y_NP-1-y_0     ...     | z_NP-1-z_0 ...
+
     diffs = np.subtract(x[:,np.newaxis,:], x[:,:,np.newaxis])
+
+    # Distances : r = sqrt(x^2 + y^2 + z^2 + epsilon)  # taille (NP, NP)
+    # pfactor = mass / r^3  # une masse par colonne, taille (NP, NP)
+    #   m_0 / r_0,0^3     m_1 / r_0,1^3     ...  m_NP-1 / r_0,NP-1^3
+    #   m_0 / r_1,0^3     m_1 / r_1,1^3     ...  m_NP-1 / r_1,NP-1^3
+    #   ...
+    #   m_0 / r_NP-1,0^3  m_1 / r_NP-1,1^3  ...  m_NP-1 / r_NP-1,NP-1^3
+
     pfactor = mass/np.sqrt(np.sum(diffs**2, axis=0) + epsilon)**3
+
+    # Annuler le pfactor pour chaque particule avec elle-même (pfactor_k,k = 0)
     np.fill_diagonal(pfactor, 0.0)
+
+    # Pour chaque composante x, y et z, multiplier la différence par le
+    # pfactor correspondant. Dans la multiplication valeur par valeur :
+    # - L'axe 1 de diffs est aligné selon l'axe 0 de pfactor (ligne par ligne)
+    # - L'axe 2 de diffs est aligné selon l'axe 1 de pfactor (colonne par col.)
+    # - Le produit donne une taille de (3, NP, NP)
+    # Somme finale le long de l'axe des différentes masses (colonne par col.)
+    # Retourne les accélérations, taille (3, NP)
+
     return np.sum(diffs*pfactor, axis=2)
 
 def compute_energy(x, v, mass):
