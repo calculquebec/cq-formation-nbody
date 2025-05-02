@@ -128,6 +128,10 @@ def center_particles(x, mass):
     x -= compute_center_of_mass(x, mass)[:,np.newaxis]
 
 def integrate():
+    """
+    Intégration itérative de la position de NP particules
+    """
+
     # Assign initial values...
     randoms = np.random.randint(256**4, dtype='<u4', size=2*3*NP) / (256.0*256*256*256)
 
@@ -161,7 +165,7 @@ def integrate():
     print(f"0.0  {compute_energy(x,v,mass)/NP:g}")
 
     if VERLET:
-        acc = compute_acceleration(x,mass)
+        acc = compute_acceleration(x, mass)
         for l in range(1,NT+1):
             # Print out the system's total energy per particle (should be fairly constant)
             if l%write_freq == 0:
@@ -170,7 +174,7 @@ def integrate():
             # Now update the arrays
             x += dt*v + 0.5*dt*dt*acc
             boundary_conditions(x)
-            temp = compute_acceleration(x,mass)
+            temp = compute_acceleration(x, mass)
             v += 0.5*dt*(acc + temp)
             acc = temp
             if l%write_freq == 0:
@@ -199,7 +203,6 @@ def integrate():
 
     write_state(NT,x)
 
-    
 def read_parameters(filename):
     global NT, NP, tvalue, seed, dt, epsilon, low_mass, high_mass, write_freq
     global finite_domain, center_masses, bounded_state, L
@@ -273,7 +276,7 @@ def read_parameters(filename):
 
 def main():
     if len(sys.argv) > 2:
-        sys.stderr.write("Usage: ./nbody parameters.txt\n")
+        sys.stderr.write("Usage: python python-nbody.py [parameters.txt]\n")
         sys.exit(0)
 
     if len(sys.argv) == 2:
@@ -281,4 +284,5 @@ def main():
 
     integrate()
 
-main()
+if __name__ == '__main__':
+    main()
